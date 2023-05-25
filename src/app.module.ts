@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { ConfigModule } from './config/config.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from './config/config.service';
+import { LoadModule } from './load/load.module';
 
 @Module({
   imports: [QuestionsModule,
@@ -28,7 +29,8 @@ import { ConfigService } from './config/config.service';
         synchronize: true,
         entities: [__dirname + '/**/*.entity{.ts,.js}']
       })
-    })],
+    }),
+    LoadModule],
   controllers: [AppController],
   providers: [AppService],
 })
