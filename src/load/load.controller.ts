@@ -1,7 +1,7 @@
 import { Controller, Post } from '@nestjs/common';
 import { LoadService } from './load.service';
 
-@Controller('load')
+@Controller('api/v1/load')
 export class LoadController {
     public constructor(
         private readonly loadService: LoadService

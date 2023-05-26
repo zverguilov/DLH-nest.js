@@ -9,9 +9,12 @@ import { ConfigModule } from './config/config.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from './config/config.service';
 import { LoadModule } from './load/load.module';
+import { AssessmentsModule } from './assessments/assessments.module';
 
 @Module({
-  imports: [QuestionsModule,
+  imports: [
+    AssessmentsModule,
+    QuestionsModule,
     QuestionInstancesModule,
     AnswersModule,
     UsersModule,

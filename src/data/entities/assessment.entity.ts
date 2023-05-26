@@ -1,5 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Exclude } from 'class-transformer';
+import { type } from "os";
+import { QuestionInstance } from "./question-instance.entity";
 
 @Entity('assessment')
 export class Assessment {
@@ -29,4 +31,7 @@ export class Assessment {
 
     @Column({ type: 'tinyint', default: false })
     public pass: boolean;
+
+    @OneToMany(type => QuestionInstance, questionInstance => questionInstance.assessment)
+    public questionInstances: Promise<QuestionInstance[]>
 }
