@@ -27,7 +27,7 @@ export class LoadService {
             for (let a of answers) {
                 let newAnswer = this.answerRepository.create();
                 newAnswer.body = a;
-                newAnswer.isCorrect = answerMap[answers.indexOf(a)] == 1;
+                newAnswer.is_correct = answerMap[answers.indexOf(a)] == 1;
                 newAnswer.question = createdQuestion;
                 let createdAnswer = await this.answerRepository.save(newAnswer)
             }

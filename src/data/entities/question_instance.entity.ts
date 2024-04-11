@@ -3,7 +3,7 @@ import { Exclude } from 'class-transformer';
 import { Question } from "./question.entity";
 import { Assessment } from "./assessment.entity";
 
-@Entity('question-instance')
+@Entity('question_instance')
 export class QuestionInstance {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -14,6 +14,6 @@ export class QuestionInstance {
     @ManyToOne(type => Question, question => question.instances)
     public question: Promise<Question>
 
-    @ManyToOne(type => Assessment, assessment => assessment.questionInstances)
+    @ManyToOne(type => Assessment, assessment => assessment.question_instances)
     public assessment: Promise<Assessment>
 }

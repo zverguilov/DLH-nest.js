@@ -3,8 +3,8 @@ import { Question } from "./question.entity";
 
 @Entity('answer')
 export class Answer {
-    @PrimaryGeneratedColumn()
-    public id!: number;
+    @PrimaryGeneratedColumn('uuid')
+    public id: string;
 
     @Column({ type: 'nvarchar', nullable: false, length: 4096 })
     public body: string;
@@ -13,5 +13,5 @@ export class Answer {
     public question: Question
 
     @Column({ type: 'tinyint', default: false })
-    public isCorrect: boolean;
+    public is_correct: boolean;
 }

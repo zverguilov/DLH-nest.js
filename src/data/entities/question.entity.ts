@@ -3,13 +3,13 @@ import { Exclude } from 'class-transformer';
 import { Answer } from "./answer.entity";
 import { type } from "os";
 import { any } from "joi";
-import { QuestionInstance } from "./question-instance.entity";
+import { QuestionInstance } from "./question_instance.entity";
 
 
 @Entity('question')
 export class Question {
-    @PrimaryGeneratedColumn()
-    public id: number;
+    @PrimaryGeneratedColumn('uuid')
+    public id: string;
 
     @Column({ type: 'nvarchar', nullable: false, length: 4096 })
     public body: string;

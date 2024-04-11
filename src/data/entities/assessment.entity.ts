@@ -1,29 +1,29 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Exclude } from 'class-transformer';
 import { type } from "os";
-import { QuestionInstance } from "./question-instance.entity";
+import { QuestionInstance } from "./question_instance.entity";
 
 @Entity('assessment')
 export class Assessment {
     @PrimaryGeneratedColumn('uuid')
     public id: string;
 
-    @Column({ type: 'nvarchar', nullable: false, length: 10 })
-    public number: string;
+    // @Column({ type: 'nvarchar', nullable: false, length: 10 })
+    // public number: string;
 
     @Column({ type: 'nvarchar', nullable: false, length: 10 })
-    public examType: string;
+    public exam_type: string;
 
     @Column({ type: 'integer', nullable: true })
     public grade: string;
 
     @Column({ type: 'datetime' })
-    public timeStarted: Date;
+    public time_started: Date;
 
-    @Column({ type: 'datetime' })
-    public timeEnded: Date;
+    @Column({ type: 'datetime', nullable: true })
+    public time_ended: Date;
 
-    @Column({ type: 'nvarchar', length: 32 })
+    @Column({ type: 'nvarchar', length: 32, nullable: false, default: 'Draft' })
     public status: string;
 
     @Column({ type: 'tinyint', default: false })
@@ -33,5 +33,5 @@ export class Assessment {
     public pass: boolean;
 
     @OneToMany(type => QuestionInstance, questionInstance => questionInstance.assessment)
-    public questionInstances: Promise<QuestionInstance[]>
+    public question_instances: Promise<QuestionInstance[]>
 }
