@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Exclude } from 'class-transformer';
 import { type } from "os";
 import { QuestionInstance } from "./question_instance.entity";
+import { GetQuestionInstanceDTO } from "src/models/question-instance/get-question-instance.dto";
 
 @Entity('assessment')
 export class Assessment {
@@ -33,5 +34,5 @@ export class Assessment {
     public pass: boolean;
 
     @OneToMany(type => QuestionInstance, questionInstance => questionInstance.assessment)
-    public question_instances: Promise<QuestionInstance[]>
+    public question_instances: Promise<GetQuestionInstanceDTO[]>
 }

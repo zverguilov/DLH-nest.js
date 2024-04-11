@@ -1,51 +1,39 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assessment } from 'src/data/entities/assessment.entity';
+import { AnswersService } from 'src/answers/answers.service';
+import { QuestionsService } from 'src/questions/questions.service';
 import { QuestionInstance } from 'src/data/entities/question_instance.entity';
 import { Question } from 'src/data/entities/question.entity';
 import { Like, Repository } from 'typeorm';
+import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
+import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
 
 @Injectable()
 export class AssessmentsService {
     public constructor(
         @InjectRepository(Assessment) private readonly assessmentRepository: Repository<Assessment>,
-        @InjectRepository(Question) private readonly questionRepository: Repository<Question>,
-        @InjectRepository(QuestionInstance) private readonly questionInstanceRepository: Repository<QuestionInstance>
-    ) {}
+        private readonly questionsService: QuestionsService,
+        private readonly questionInstanceService: QuestionInstancesService
+    ) { }
 
-    public async getRandomAssessment(category: string) {
-        let randomQuestions = await this.questionRepository.createQueryBuilder('question')
-        .leftJoinAndSelect('question.answers', 'answer')
-        .where(`question.category = "${category}"`)
-        .select()
-        .orderBy('RAND()')
-        .take(60)
-        .getMany()
-        
-        let newAssessment = await this.assessmentRepository.createQueryBuilder()
-        .insert()
-        .into('assessment')
-        .values({
-            time_started: new Date(),
-            exam_type: category
-        })
-        .execute()
+    public async getRandomAssessment(category: string): Promise<Assessment> {
+        let newAssessment = await this.assessmentRepository.create()
+        newAssessment.time_started = new Date();
+        newAssessment.exam_type = category;
+        await this.assessmentRepository.save(newAssessment);
 
-        randomQuestions.forEach((question: Question) => {
-            let newQuestionInstance = this.questionInstanceRepository.createQueryBuilder()
-            .insert()
-            .into('question_instance')
-            .values({
-                body: question.body,
-                question: question.id,
-                assessment: newAssessment.identifiers[0].id
-            })
-            .execute()
-        }, this)
+        let randomQuestionsBatch = await this.questionsService.getRandomBatch(category);
+        await this.questionInstanceService.createQuestionInstances(randomQuestionsBatch, newAssessment.id);
 
-        return randomQuestions;
-        //pull 60 random questions
-        //create assessment
-        //create 60 instances - question-assessment pairs
+        let fullAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
+        .leftJoin('assessment.question_instances', 'questionInstance')
+        .leftJoin('questionInstance.question', 'question')
+        .leftJoin('question.answers', 'answer')
+        .select(['assessment.id', 'assessment.time_started', 'assessment.exam_type', 'questionInstance.id', 'question.id', 'question.body', 'answer.id', 'answer.body'])
+        .where('assessment.id = :id', { id: newAssessment.id })
+        .getOne();
+
+        return fullAssessment;
     }
 }

@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Assessment } from 'src/data/entities/assessment.entity';
 import { Question } from 'src/data/entities/question.entity';
 import { QuestionInstance } from 'src/data/entities/question_instance.entity';
+import { QuestionsService } from 'src/questions/questions.service';
+import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
 
 @Module({imports: [
   TypeOrmModule.forFeature([Assessment]),
@@ -12,6 +14,6 @@ import { QuestionInstance } from 'src/data/entities/question_instance.entity';
   TypeOrmModule.forFeature([QuestionInstance])
 ],
   controllers: [AssessmentsController],
-  providers: [AssessmentsService]
+  providers: [AssessmentsService, QuestionsService, QuestionInstancesService]
 })
 export class AssessmentsModule {}

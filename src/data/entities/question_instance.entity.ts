@@ -7,9 +7,9 @@ import { Assessment } from "./assessment.entity";
 export class QuestionInstance {
     @PrimaryGeneratedColumn('uuid')
     id: string;
-
-    @Column({ type: 'nvarchar', nullable: false, length: 4096 })
-    body: string;
+    
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    is_correct: boolean;
 
     @ManyToOne(type => Question, question => question.instances)
     public question: Promise<Question>

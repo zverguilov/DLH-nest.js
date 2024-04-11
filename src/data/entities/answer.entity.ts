@@ -4,9 +4,9 @@ import { Question } from "./question.entity";
 @Entity('answer')
 export class Answer {
     @PrimaryGeneratedColumn('uuid')
-    public id: string;
+    id: string;
 
-    @Column({ type: 'nvarchar', nullable: false, length: 4096 })
+    @Column({ type: 'nvarchar', length: 4096 })
     public body: string;
 
     @ManyToOne(type => Question, question => question.answers)
