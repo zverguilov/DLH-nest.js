@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assessment } from 'src/data/entities/assessment.entity';
-import { AnswersService } from 'src/answers/answers.service';
 import { QuestionsService } from 'src/questions/questions.service';
-import { QuestionInstance } from 'src/data/entities/question_instance.entity';
-import { Question } from 'src/data/entities/question.entity';
 import { Like, Repository } from 'typeorm';
-import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
 import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
 
 @Injectable()

@@ -7,13 +7,17 @@ import { Question } from 'src/data/entities/question.entity';
 import { QuestionInstance } from 'src/data/entities/question_instance.entity';
 import { QuestionsService } from 'src/questions/questions.service';
 import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
+import { AnswersService } from 'src/answers/answers.service';
+import { Answer } from 'src/data/entities/answer.entity';
 
-@Module({imports: [
-  TypeOrmModule.forFeature([Assessment]),
-  TypeOrmModule.forFeature([Question]),
-  TypeOrmModule.forFeature([QuestionInstance])
-],
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Assessment]),
+    TypeOrmModule.forFeature([Question]),
+    TypeOrmModule.forFeature([QuestionInstance]),
+    TypeOrmModule.forFeature([Answer])
+  ],
   controllers: [AssessmentsController],
-  providers: [AssessmentsService, QuestionsService, QuestionInstancesService]
+  providers: [AssessmentsService, QuestionsService, QuestionInstancesService, AnswersService]
 })
-export class AssessmentsModule {}
+export class AssessmentsModule { }

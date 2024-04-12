@@ -1,5 +1,4 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Exclude } from 'class-transformer';
 import { type } from "os";
 import { QuestionInstance } from "./question_instance.entity";
 import { GetQuestionInstanceDTO } from "src/models/question-instance/get-question-instance.dto";

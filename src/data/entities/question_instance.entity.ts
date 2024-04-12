@@ -1,5 +1,4 @@
 import { Column, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Exclude } from 'class-transformer';
 import { Question } from "./question.entity";
 import { Assessment } from "./assessment.entity";
 
@@ -7,9 +6,12 @@ import { Assessment } from "./assessment.entity";
 export class QuestionInstance {
     @PrimaryGeneratedColumn('uuid')
     id: string;
-    
+
     @Column({ type: 'tinyint', nullable: false, default: false })
     is_correct: boolean;
+
+    @Column({ type: 'nvarchar', nullable: true, length: 1024 })
+    selected_asnwers: string;
 
     @ManyToOne(type => Question, question => question.instances)
     public question: Promise<Question>
