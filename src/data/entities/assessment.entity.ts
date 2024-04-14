@@ -1,15 +1,13 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { type } from "os";
 import { QuestionInstance } from "./question_instance.entity";
 import { GetQuestionInstanceDTO } from "src/models/question-instance/get-question-instance.dto";
+import { User } from "./user.entity";
 
 @Entity('assessment')
 export class Assessment {
     @PrimaryGeneratedColumn('uuid')
     public id: string;
-
-    // @Column({ type: 'nvarchar', nullable: false, length: 10 })
-    // public number: string;
 
     @Column({ type: 'nvarchar', nullable: false, length: 10 })
     public exam_type: string;
@@ -33,5 +31,8 @@ export class Assessment {
     public pass: boolean;
 
     @OneToMany(type => QuestionInstance, questionInstance => questionInstance.assessment)
-    public question_instances: Promise<GetQuestionInstanceDTO[]>
+    public question_instances: Promise<GetQuestionInstanceDTO[]>;
+
+    @ManyToOne(type => User, user => user.assessments)
+    public user: Promise<User>;
 }

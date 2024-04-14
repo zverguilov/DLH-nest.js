@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Exclude } from 'class-transformer';
 import { Answer } from "./answer.entity";
 import { QuestionInstance } from "./question_instance.entity";
+import { Comment } from "./comment.entity";
 
 
 @Entity('question')
@@ -20,4 +21,7 @@ export class Question {
 
     @OneToMany(type => QuestionInstance, questionInstance => questionInstance.question)
     public instances: Promise<QuestionInstance[]>
+
+    @OneToMany(type => Comment, comment => comment.question)
+    public comments: Promise<Comment[]>
 }

@@ -10,6 +10,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from './config/config.service';
 import { LoadModule } from './load/load.module';
 import { AssessmentsModule } from './assessments/assessments.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AssessmentsModule } from './assessments/assessments.module';
     QuestionInstancesModule,
     AnswersModule,
     UsersModule,
+    CommentsModule,
     ConfigModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
