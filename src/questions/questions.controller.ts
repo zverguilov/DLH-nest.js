@@ -1,4 +1,11 @@
-import { Controller } from '@nestjs/common';
+import { Body, Controller, Param, Put, UseGuards } from '@nestjs/common';
+import { QuestionsService } from './questions.service';
+import { AuthGuard } from '@nestjs/passport';
+import { FlagQuestionDTO } from 'src/models/question/flag-question.dto';
 
-@Controller('questions')
-export class QuestionsController {}
+@Controller('question')
+export class QuestionsController {
+    public constructor (
+        private readonly questionsService: QuestionsService
+    ) { }
+}

@@ -13,8 +13,11 @@ export class Question {
     @Column({ type: 'nvarchar', length: 4096 })
     public body: string;
 
-    @Column({ type: 'nvarchar', nullable: false, length: 16 })
+    @Column({ type: 'nvarchar', nullable: false, length: 16})
     public category: string
+
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public is_flagged: boolean;
 
     @OneToMany(type => Answer, answer => answer.question)
     public answers: Promise<Answer[]>

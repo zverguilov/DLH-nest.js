@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AssessmentsService } from './assessments.service';
 import { Assessment } from 'src/data/entities/assessment.entity';
 import { AuthGuard } from '@nestjs/passport';
+import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
 
 @Controller('api/v1/assessment')
 export class AssessmentsController {
@@ -9,9 +10,9 @@ export class AssessmentsController {
         private readonly assessmentService: AssessmentsService
     ) {}
 
-    @Get()
+    @Post()
     @UseGuards(AuthGuard())
-    public async getRandomAssessment(@Query('category') category: string): Promise<Assessment> {
-        return await this.assessmentService.getRandomAssessment(category);
+    public async createRandomAssessment(@Body() payload: CreateAssessmentDTO): Promise<Assessment> {
+        return await this.assessmentService.createRandomAssessment(payload);
     }
 }

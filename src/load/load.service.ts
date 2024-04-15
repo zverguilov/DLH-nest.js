@@ -13,25 +13,31 @@ export class LoadService {
 
     public async loadData(): Promise<void> {
 
-        const data = await this.readCell('src/load/data-source/ExamDumps.xlsx');
+        const sheetData = await this.readCell('src/load/data-source/ExamDumps.xlsx');
+        const sheets = Object.keys(sheetData);
 
-        for (let e of data) {
-            let newQuestion = await this.questionRepository.create();
-            newQuestion.body = e[2];
-            newQuestion.category = e[5];
-            let createdQuestion = await this.questionRepository.save(newQuestion);
-
-            let answers = e[3].split(' / ');
-            let answerMap = e[4].split(',');
-
-            for (let a of answers) {
-                let newAnswer = this.answerRepository.create();
-                newAnswer.body = a;
-                newAnswer.is_correct = answerMap[answers.indexOf(a)] == 1;
-                newAnswer.question = createdQuestion;
-                let createdAnswer = await this.answerRepository.save(newAnswer)
+        for (let sheet of sheets) {
+            for (let e of sheetData[sheet]) {
+                console.log(`${e[1]}: ${e[2]}`)
+                let newQuestion = await this.questionRepository.create();
+                newQuestion.body = e[2];
+                newQuestion.category = e[5];
+                let createdQuestion = await this.questionRepository.save(newQuestion);
+    
+                let answers = e[3].split(' / ');
+                let answerMap = e[4].split(',');
+    
+                for (let a of answers) {
+                    let newAnswer = this.answerRepository.create();
+                    newAnswer.body = a;
+                    newAnswer.is_correct = answerMap[answers.indexOf(a)] == 1;
+                    newAnswer.question = createdQuestion;
+                    let createdAnswer = await this.answerRepository.save(newAnswer)
+                }
             }
+           
         }
+
     }
 
     private async readCell(filename) {
@@ -40,15 +46,22 @@ export class LoadService {
         let workBook = new Excel.Workbook();
         await workBook.xlsx.readFile(filename);
 
-        let sheet = workBook.getWorksheet('CSA');
-        const data = [];
+        const sheetNames = workBook.worksheets.map(sheet => sheet.name);
 
-        sheet.eachRow((row, rowNumber) => {
-            if (rowNumber == 1) return;
-            const rowData = row.values;
-            data.push(rowData);
-        });
+        let sheetData = sheetNames.reduce((acc, curr) => {
+            let sheet = workBook.getWorksheet(curr);
+            const data = [];
+    
+            sheet.eachRow((row, rowNumber) => {
+                if (rowNumber == 1) return;
+                const rowData = row.values;
+                data.push(rowData);
+            });
 
-        return data;
+            acc[curr] = data;
+            return acc;
+        }, {})
+
+        return sheetData;
     }
 }

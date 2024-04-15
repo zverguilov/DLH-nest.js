@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/data/entities/question.entity';
+import { FlagQuestionDTO } from 'src/models/question/flag-question.dto';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -19,5 +20,18 @@ export class QuestionsService {
             .getMany()
 
         return randomQuestions;
+    }
+
+    public async getQuestionByID(id: string): Promise<Question> {
+        return await this.questionRepository.findOne({where: { id }});
+    }
+
+    public async flagQuestion(id: string): Promise<string> {
+        let question = await this.getQuestionByID(id);
+
+        if (!question.is_flagged) question.is_flagged = true;
+        await this.questionRepository.save(question);
+        
+        return "Question flagged"
     }
 }

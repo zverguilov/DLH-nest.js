@@ -10,6 +10,8 @@ import { QuestionInstancesService } from 'src/question-instances/question-instan
 import { AnswersService } from 'src/answers/answers.service';
 import { Answer } from 'src/data/entities/answer.entity';
 import { PassportModule } from '@nestjs/passport';
+import { User } from 'src/data/entities/user.entity';
+import { UsersService } from 'src/users/users.service';
 
 @Module({
   imports: [
@@ -17,9 +19,10 @@ import { PassportModule } from '@nestjs/passport';
     TypeOrmModule.forFeature([Assessment]),
     TypeOrmModule.forFeature([Question]),
     TypeOrmModule.forFeature([QuestionInstance]),
+    TypeOrmModule.forFeature([User]),
     TypeOrmModule.forFeature([Answer])
   ],
   controllers: [AssessmentsController],
-  providers: [AssessmentsService, QuestionsService, QuestionInstancesService, AnswersService]
+  providers: [AssessmentsService, QuestionsService, QuestionInstancesService, AnswersService, UsersService]
 })
 export class AssessmentsModule { }
