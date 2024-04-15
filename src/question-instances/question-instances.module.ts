@@ -5,9 +5,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { QuestionInstance } from 'src/data/entities/question_instance.entity';
 import { AnswersService } from 'src/answers/answers.service';
 import { Answer } from 'src/data/entities/answer.entity';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     TypeOrmModule.forFeature([QuestionInstance]),
     TypeOrmModule.forFeature([Answer])
   ],

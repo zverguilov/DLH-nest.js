@@ -11,9 +11,12 @@ import { ConfigService } from './config/config.service';
 import { LoadModule } from './load/load.module';
 import { AssessmentsModule } from './assessments/assessments.module';
 import { CommentsModule } from './comments/comments.module';
+import { AuthService } from './auth/auth/auth.service';
+import { AuthModule } from './auth/auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     AssessmentsModule,
     QuestionsModule,
     QuestionInstancesModule,

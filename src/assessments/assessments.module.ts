@@ -9,9 +9,11 @@ import { QuestionsService } from 'src/questions/questions.service';
 import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
 import { AnswersService } from 'src/answers/answers.service';
 import { Answer } from 'src/data/entities/answer.entity';
+import { PassportModule } from '@nestjs/passport';
 
 @Module({
   imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     TypeOrmModule.forFeature([Assessment]),
     TypeOrmModule.forFeature([Question]),
     TypeOrmModule.forFeature([QuestionInstance]),

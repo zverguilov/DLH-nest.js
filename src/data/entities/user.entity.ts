@@ -8,8 +8,8 @@ export class User {
     @PrimaryGeneratedColumn('uuid')
     public id: string;
 
-    @Column({ type: 'nvarchar', nullable: false, length: 128})
-    public full_name: string;
+    @Column({ type: 'nvarchar', nullable: false, length: 128 })
+    public full_name!: string;
 
     @IsEmail()
     @Column({ type: 'varchar', nullable: false, unique: true, length: 256 })
@@ -20,6 +20,9 @@ export class User {
 
     @Column({ type: 'varchar', nullable: false, default: 'user' })
     public role: string;
+
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public isDeleted: boolean;
 
     @OneToMany(type => Comment, comment => comment.user)
     public comments: Promise<Comment[]>;
