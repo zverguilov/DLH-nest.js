@@ -10,7 +10,10 @@ export class UsersService {
     ) { }
 
     public async getUserByID(id: string): Promise<User> {
-        let user = await this.userRepository.findOne({ where: { id }})
-        return user;
+        try {
+            return await this.userRepository.findOne({ where: { id }})
+        } catch (ex) {
+            throw `User Service retrieval error: ${ex.message}`
+        }
     }
 }

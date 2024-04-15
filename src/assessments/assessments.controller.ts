@@ -10,6 +10,11 @@ export class AssessmentsController {
         private readonly assessmentService: AssessmentsService
     ) {}
 
+    @Get()
+    public async ping(): Promise<any> {
+        return 'ping!'
+    }
+
     @Post()
     @UseGuards(AuthGuard())
     public async createRandomAssessment(@Body() payload: CreateAssessmentDTO): Promise<Assessment> {

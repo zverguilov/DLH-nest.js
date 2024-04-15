@@ -11,57 +11,66 @@ export class LoadService {
         @InjectRepository(Answer) private readonly answerRepository: Repository<Answer>
     ) { }
 
-    public async loadData(): Promise<void> {
+    public async loadData(): Promise<string> {
+        try {
+            const sheetData = await this.readCell('src/load/data-source/ExamDumps.xlsx');
+            const sheets = Object.keys(sheetData);
 
-        const sheetData = await this.readCell('src/load/data-source/ExamDumps.xlsx');
-        const sheets = Object.keys(sheetData);
+            for (let sheet of sheets) {
+                for (let e of sheetData[sheet]) {
+                    console.log(`${e[1]}: ${e[2]}`)
+                    let newQuestion = await this.questionRepository.create();
+                    newQuestion.body = e[2];
+                    newQuestion.category = e[5];
+                    let createdQuestion = await this.questionRepository.save(newQuestion);
 
-        for (let sheet of sheets) {
-            for (let e of sheetData[sheet]) {
-                console.log(`${e[1]}: ${e[2]}`)
-                let newQuestion = await this.questionRepository.create();
-                newQuestion.body = e[2];
-                newQuestion.category = e[5];
-                let createdQuestion = await this.questionRepository.save(newQuestion);
-    
-                let answers = e[3].split(' / ');
-                let answerMap = e[4].split(',');
-    
-                for (let a of answers) {
-                    let newAnswer = this.answerRepository.create();
-                    newAnswer.body = a;
-                    newAnswer.is_correct = answerMap[answers.indexOf(a)] == 1;
-                    newAnswer.question = createdQuestion;
-                    let createdAnswer = await this.answerRepository.save(newAnswer)
+                    let answers = e[3].split(' / ');
+                    let answerMap = e[4].split(',');
+
+                    for (let a of answers) {
+                        let newAnswer = this.answerRepository.create();
+                        newAnswer.body = a;
+                        newAnswer.is_correct = answerMap[answers.indexOf(a)] == 1;
+                        newAnswer.question = createdQuestion;
+                        let createdAnswer = await this.answerRepository.save(newAnswer)
+                    }
                 }
             }
-           
-        }
 
+            return 'Data successfully loaded.'
+
+        } catch (ex) {
+            throw `Load Service import error: ${ex.message}`
+        }
     }
 
     private async readCell(filename) {
-        const Excel = require('exceljs');
+        try {
+            const Excel = require('exceljs');
 
-        let workBook = new Excel.Workbook();
-        await workBook.xlsx.readFile(filename);
+            let workBook = new Excel.Workbook();
+            await workBook.xlsx.readFile(filename);
 
-        const sheetNames = workBook.worksheets.map(sheet => sheet.name);
+            const sheetNames = workBook.worksheets.map(sheet => sheet.name);
 
-        let sheetData = sheetNames.reduce((acc, curr) => {
-            let sheet = workBook.getWorksheet(curr);
-            const data = [];
-    
-            sheet.eachRow((row, rowNumber) => {
-                if (rowNumber == 1) return;
-                const rowData = row.values;
-                data.push(rowData);
-            });
+            let sheetData = sheetNames.reduce((acc, curr) => {
+                let sheet = workBook.getWorksheet(curr);
+                const data = [];
 
-            acc[curr] = data;
-            return acc;
-        }, {})
+                sheet.eachRow((row, rowNumber) => {
+                    if (rowNumber == 1) return;
+                    const rowData = row.values;
+                    data.push(rowData);
+                });
 
-        return sheetData;
+                acc[curr] = data;
+                return acc;
+            }, {})
+
+            return sheetData;
+
+        } catch (ex) {
+            throw `Load Service reading error: ${ex.message}`
+        }
     }
 }

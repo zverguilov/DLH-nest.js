@@ -7,14 +7,19 @@ import { Repository } from 'typeorm';
 export class AnswersService {
     public constructor(
         @InjectRepository(Answer) private readonly answerRepository: Repository<Answer>
-    ) {}
+    ) { }
 
     public async getCorrectAnswers(questionID: string): Promise<Answer[]> {
-        let correctAnswers = await this.answerRepository.createQueryBuilder('answer')
-        .where('answer.question = :qID', { qID: questionID })
-        .andWhere('answer.is_correct = :correct', { correct: true })
-        .getMany();
+        try {
+            let correctAnswers = await this.answerRepository.createQueryBuilder('answer')
+                .where('answer.question = :qID', { qID: questionID })
+                .andWhere('answer.is_correct = :correct', { correct: true })
+                .getMany();
 
-        return correctAnswers;
+            return correctAnswers;
+
+        } catch (ex) {
+            throw `Answer Service error while collecting records: ${ex.message}`
+        }
     }
 }

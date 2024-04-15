@@ -13,23 +13,28 @@ export class CommentsService {
     ) { }
 
     public async flag(payload: FlagQuestionDTO): Promise<Comment> {
-        let newComment = await this.commentRepository.createQueryBuilder()
-        .insert()
-        .into('comment')
-        .values({
-            question: payload.question_id,
-            user: payload.user_id,
-            content: payload.content
-        })
-        .execute()
+        try {
+            let newComment = await this.commentRepository.createQueryBuilder()
+                .insert()
+                .into('comment')
+                .values({
+                    question: payload.question_id,
+                    user: payload.user_id,
+                    content: payload.content
+                })
+                .execute()
 
-        await this.questionsService.flagQuestion(payload.question_id);
+            await this.questionsService.flagQuestion(payload.question_id);
 
-        return {
-            id: newComment.identifiers[0].id,
-            question: newComment.identifiers[0].question,
-            user: newComment.identifiers[0].user,
-            content: newComment.identifiers[0].content
+            return {
+                id: newComment.identifiers[0].id,
+                question: newComment.identifiers[0].question,
+                user: newComment.identifiers[0].user,
+                content: newComment.identifiers[0].content
+            }
+
+        } catch (ex) {
+            throw `Comment Service flag error: ${ex.message}`
         }
     }
 }

@@ -10,7 +10,7 @@ export class LoadController {
 
     @Post('data')
     @UseGuards(AuthGuard())
-    public async loadData(): Promise<void> {
+    public async loadData(): Promise<string> {
         return await this.loadService.loadData();
     }
 }
