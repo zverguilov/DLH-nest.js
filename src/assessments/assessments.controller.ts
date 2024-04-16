@@ -10,9 +10,15 @@ export class AssessmentsController {
         private readonly assessmentService: AssessmentsService
     ) {}
 
-    @Get()
-    public async ping(): Promise<any> {
-        return 'ping!'
+    @Get('ongoing/:userID')
+    public async getActiveAssessment(@Param('userID') userID: string): Promise<Assessment> {
+        return await this.assessmentService.getActiveAssessment(userID);
+    }
+
+    @Get('list/:userID')
+    @UseGuards(AuthGuard())
+    public async getMyAssessments(@Param('userID') userID: string): Promise<Assessment[]> {
+        return await this.assessmentService.getMyAssessments(userID);
     }
 
     @Post()

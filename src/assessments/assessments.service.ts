@@ -14,8 +14,53 @@ export class AssessmentsService {
         private readonly questionInstanceService: QuestionInstancesService
     ) { }
 
+    public async getActiveAssessment(userID: string): Promise<Assessment> {
+        let ongoingAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
+            .leftJoin('assessment.question_instances', 'questionInstance')
+            .leftJoin('questionInstance.question', 'question')
+            .leftJoin('question.answers', 'answer')
+            .leftJoin('assessment.user', 'user')
+            .select([
+                'assessment.id',
+                'assessment.time_started',
+                'assessment.exam_type',
+                'user.id',
+                'user.full_name',
+                'questionInstance.id',
+                'question.id',
+                'question.body',
+                'answer.id',
+                'answer.body'
+            ])
+            .where('assessment.user = :user', { user: userID })
+            .andWhere('assessment.submitted = :submitted', { submitted: false })
+            .getOne()
+
+            return ongoingAssessment
+    }
+
+    public async getMyAssessments(userID: string): Promise<Assessment[]> {
+        try {
+            let assessments = await this.assessmentRepository.createQueryBuilder('assessment')
+                .where('assessment.user = :user', { user: userID })
+                .andWhere('assessment.submitted = :submitted', { submitted: true })
+                .getMany()
+
+            return assessments
+        } catch (ex) {
+            throw `Assessment Service mass retrieval error: ${ex.message}`
+        }
+    }
+
     public async createRandomAssessment(payload: CreateAssessmentDTO): Promise<Assessment> {
         try {
+            let ongoingAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
+                .where('assessment.user = :user', { user: payload.user })
+                .andWhere('assessment.submitted = :submitted', { submitted: false })
+                .getOne()
+
+            if (ongoingAssessment) throw 'You can only have one active assessment.'
+
             let newAssessment = await this.assessmentRepository.createQueryBuilder()
                 .insert()
                 .into('assessment')
