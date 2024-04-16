@@ -4,6 +4,7 @@ import { AnswersService } from 'src/answers/answers.service';
 import { Question } from 'src/data/entities/question.entity';
 import { QuestionInstance } from 'src/data/entities/question_instance.entity';
 import { MarkPayloadDTO } from 'src/models/others/mark-payload.dto';
+import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-question-instance.dto';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -12,6 +13,26 @@ export class QuestionInstancesService {
         @InjectRepository(QuestionInstance) private readonly questionInstanceRepository: Repository<QuestionInstance>,
         private readonly answersService: AnswersService
     ) { }
+
+    public async getQuestionInstancePackage(assessmentID: string, questionNumber: number): Promise<GetQuestionInstanceDTO> {
+        let questionInstance = await this.questionInstanceRepository.createQueryBuilder('question_instance')
+            .leftJoin('question_instance.question', 'question')
+            .leftJoin('question.answers', 'answer')
+            .where('question_instance.assessment = :id', { id: assessmentID })
+            .select([
+                'question_instance.id',
+                'question.id',
+                'question.body',
+                'answer.id',
+                'answer.body'
+            ])
+            .orderBy('question_instance.id', 'ASC')
+            .skip(questionNumber)
+            .take(1)
+            .getOne()
+
+        return questionInstance;
+    }
 
     public async createQuestionInstances(questions: Question[], assessmentID: string): Promise<QuestionInstance[]> {
         try {

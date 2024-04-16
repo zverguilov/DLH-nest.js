@@ -56,13 +56,13 @@ export class AssessmentsService {
     public async createRandomAssessment(payload: CreateAssessmentDTO): Promise<Assessment> {
         try {
             let ongoingAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
-                .where('assessment.user = :user', { user: payload.user })
-                .andWhere('assessment.submitted = :submitted', { submitted: false })
-                .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
-                .getOne()
-
-            if (ongoingAssessment) throw 'You can only have one active assessment.'
-
+            .where('assessment.user = :user', { user: payload.user })
+            .andWhere('assessment.submitted = :submitted', { submitted: false })
+            .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
+            .getOne()
+            
+            if (ongoingAssessment) throw new Error('You can only have one active assessment.') 
+            
             let newAssessment = await this.assessmentRepository.createQueryBuilder()
                 .insert()
                 .into('assessment')
@@ -77,21 +77,21 @@ export class AssessmentsService {
             await this.questionInstanceService.createQuestionInstances(randomQuestionsBatch, newAssessment.identifiers[0].id);
 
             let fullAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
-                .leftJoin('assessment.question_instances', 'questionInstance')
-                .leftJoin('questionInstance.question', 'question')
-                .leftJoin('question.answers', 'answer')
-                .leftJoin('assessment.user', 'user')
+                // .leftJoin('assessment.question_instances', 'questionInstance')
+                // .leftJoin('questionInstance.question', 'question')
+                // .leftJoin('question.answers', 'answer')
+                // .leftJoin('assessment.user', 'user')
                 .select([
                     'assessment.id',
                     'assessment.time_started',
                     'assessment.exam_type',
-                    'user.id',
-                    'user.full_name',
-                    'questionInstance.id',
-                    'question.id',
-                    'question.body',
-                    'answer.id',
-                    'answer.body'
+                    // 'user.id',
+                    // 'user.full_name',
+                    // 'questionInstance.id',
+                    // 'question.id',
+                    // 'question.body',
+                    // 'answer.id',
+                    // 'answer.body'
                 ])
                 .where('assessment.id = :id', { id: newAssessment.identifiers[0].id })
                 .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
