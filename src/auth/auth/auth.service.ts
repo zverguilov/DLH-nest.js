@@ -23,7 +23,7 @@ export class AuthService {
     try {
       const loginMethod = { email: user.email };
       const foundUser: User = await this.usersRepository
-        .findOne({ where: { ...loginMethod, isDeleted: false } });
+        .findOne({ where: { ...loginMethod, is_deleted: false } });
 
       if (!foundUser || !(await bcrypt.compare(user.password, foundUser.password))) throw `Auth Service login error: invalid credentials.`;
 
@@ -49,7 +49,7 @@ export class AuthService {
       const loginMethod = { email: user.email };
 
       const foundUser: User = await this.usersRepository
-        .findOne({ where: { ...loginMethod, isDeleted: false } });
+        .findOne({ where: { ...loginMethod, is_deleted: false } });
 
       if (foundUser) throw `Auth Service error in registration: user already exists`;
 

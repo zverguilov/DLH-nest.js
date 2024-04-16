@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Comment } from "src/data/entities/comment.entity";
+import { CommentCreatedDTO } from "src/models/comment/comment-created.dto";
 import { FlagQuestionDTO } from "src/models/question/flag-question.dto";
 import { QuestionsService } from "src/questions/questions.service";
 import { Repository } from "typeorm";
@@ -12,7 +13,7 @@ export class CommentsService {
         private readonly questionsService: QuestionsService
     ) { }
 
-    public async flag(payload: FlagQuestionDTO): Promise<Comment> {
+    public async flag(payload: FlagQuestionDTO): Promise<CommentCreatedDTO> {
         try {
             let newComment = await this.commentRepository.createQueryBuilder()
                 .insert()
@@ -28,8 +29,6 @@ export class CommentsService {
 
             return {
                 id: newComment.identifiers[0].id,
-                question: newComment.identifiers[0].question,
-                user: newComment.identifiers[0].user,
                 content: newComment.identifiers[0].content
             }
 

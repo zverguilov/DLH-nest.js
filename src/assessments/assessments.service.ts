@@ -44,6 +44,7 @@ export class AssessmentsService {
             let assessments = await this.assessmentRepository.createQueryBuilder('assessment')
                 .where('assessment.user = :user', { user: userID })
                 .andWhere('assessment.submitted = :submitted', { submitted: true })
+                .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
                 .getMany()
 
             return assessments
@@ -57,6 +58,7 @@ export class AssessmentsService {
             let ongoingAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
                 .where('assessment.user = :user', { user: payload.user })
                 .andWhere('assessment.submitted = :submitted', { submitted: false })
+                .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
                 .getOne()
 
             if (ongoingAssessment) throw 'You can only have one active assessment.'
@@ -92,6 +94,7 @@ export class AssessmentsService {
                     'answer.body'
                 ])
                 .where('assessment.id = :id', { id: newAssessment.identifiers[0].id })
+                .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
                 .getOne();
 
             return fullAssessment;

@@ -30,6 +30,9 @@ export class Assessment {
     @Column({ type: 'tinyint', default: false })
     public pass: boolean;
 
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public is_deleted: boolean;
+
     @OneToMany(type => QuestionInstance, questionInstance => questionInstance.assessment)
     public question_instances: Promise<GetQuestionInstanceDTO[]>;
 

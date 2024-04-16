@@ -11,6 +11,9 @@ export class Comment {
     @Column({ type: 'nvarchar', nullable: false, length: 4096 })
     public content: string;
     
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public is_deleted: boolean;
+    
     @ManyToOne(type => User, user => user.comments)
     public user: Promise<User>;
     

@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload): Promise<JwtPayload> {
     const isFoundUser: boolean = (await this.usersRepository
-      .count({ where: { id: payload.id, isDeleted: false } })) > 0;
+      .count({ where: { id: payload.id, is_deleted: false } })) > 0;
 
     if (!isFoundUser) {
       throw new BadRequestException(401);

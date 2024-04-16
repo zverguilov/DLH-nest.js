@@ -9,6 +9,9 @@ export class Answer {
     @Column({ type: 'nvarchar', length: 4096 })
     public body: string;
 
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public is_deleted: boolean;
+
     @ManyToOne(type => Question, question => question.answers)
     public question: Question
 

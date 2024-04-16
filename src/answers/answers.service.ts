@@ -14,6 +14,7 @@ export class AnswersService {
             let correctAnswers = await this.answerRepository.createQueryBuilder('answer')
                 .where('answer.question = :qID', { qID: questionID })
                 .andWhere('answer.is_correct = :correct', { correct: true })
+                .andWhere('answer.is_deleted = :is_deleted', { is_deleted: false })
                 .getMany();
 
             return correctAnswers;

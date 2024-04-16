@@ -19,6 +19,9 @@ export class Question {
     @Column({ type: 'tinyint', nullable: false, default: false })
     public is_flagged: boolean;
 
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public is_deleted: boolean;
+
     @OneToMany(type => Answer, answer => answer.question)
     public answers: Promise<Answer[]>
 

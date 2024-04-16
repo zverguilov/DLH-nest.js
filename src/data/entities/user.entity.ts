@@ -22,7 +22,7 @@ export class User {
     public role: string;
 
     @Column({ type: 'tinyint', nullable: false, default: false })
-    public isDeleted: boolean;
+    public is_deleted: boolean;
 
     @OneToMany(type => Comment, comment => comment.user)
     public comments: Promise<Comment[]>;
