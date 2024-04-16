@@ -11,6 +11,7 @@ export class AssessmentsController {
     ) {}
 
     @Get('assessment/ongoing/:userID')
+    @UseGuards(AuthGuard())
     public async getActiveAssessment(@Param('userID') userID: string): Promise<Assessment> {
         return await this.assessmentService.getActiveAssessment(userID);
     }

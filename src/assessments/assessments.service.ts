@@ -16,21 +16,10 @@ export class AssessmentsService {
 
     public async getActiveAssessment(userID: string): Promise<Assessment> {
         let ongoingAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
-            .leftJoin('assessment.question_instances', 'questionInstance')
-            .leftJoin('questionInstance.question', 'question')
-            .leftJoin('question.answers', 'answer')
-            .leftJoin('assessment.user', 'user')
             .select([
                 'assessment.id',
                 'assessment.time_started',
-                'assessment.exam_type',
-                'user.id',
-                'user.full_name',
-                'questionInstance.id',
-                'question.id',
-                'question.body',
-                'answer.id',
-                'answer.body'
+                'assessment.exam_type'
             ])
             .where('assessment.user = :user', { user: userID })
             .andWhere('assessment.submitted = :submitted', { submitted: false })
@@ -77,21 +66,10 @@ export class AssessmentsService {
             await this.questionInstanceService.createQuestionInstances(randomQuestionsBatch, newAssessment.identifiers[0].id);
 
             let fullAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
-                // .leftJoin('assessment.question_instances', 'questionInstance')
-                // .leftJoin('questionInstance.question', 'question')
-                // .leftJoin('question.answers', 'answer')
-                // .leftJoin('assessment.user', 'user')
                 .select([
                     'assessment.id',
                     'assessment.time_started',
-                    'assessment.exam_type',
-                    // 'user.id',
-                    // 'user.full_name',
-                    // 'questionInstance.id',
-                    // 'question.id',
-                    // 'question.body',
-                    // 'answer.id',
-                    // 'answer.body'
+                    'assessment.exam_type'
                 ])
                 .where('assessment.id = :id', { id: newAssessment.identifiers[0].id })
                 .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
