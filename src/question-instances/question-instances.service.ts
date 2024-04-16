@@ -43,7 +43,7 @@ export class QuestionInstancesService {
                 .where('question_instance.id = :id', { id: instanceID })
                 .getOne();
 
-            let correctAnswers = (await this.answersService.getCorrectAnswers(payload.questionID)).map(answer => answer.id);
+            let correctAnswers = (await this.answersService.getCorrectAnswers(payload.questionInstanceID)).map(answer => answer.id);
             let allCorrect = payload.selectedAnswers.every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selectedAnswers.length;
 
             questionInstance.is_correct = allCorrect;

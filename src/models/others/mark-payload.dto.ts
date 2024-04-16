@@ -5,5 +5,5 @@ export class MarkPayloadDTO {
     public selectedAnswers!: [];
 
     @Expose()
-    public questionID!: string;
+    public questionInstanceID!: string;
 }
