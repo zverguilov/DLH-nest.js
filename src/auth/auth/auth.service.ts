@@ -16,16 +16,16 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) { }
 
-  public async login(user: UserLoginDTO): Promise<{ authToken: string }> {
-    if (!user.email) throw `Auth Service login error: email is missing.`;
-    if (!user.password) throw `Auth Service login error: password is missing.`;
+  public async login(user: UserLoginDTO): Promise<any> {
+    if (!user.email) throw new Error(`Auth Service login error: email is missing.`);
+    if (!user.password) throw new Error(`Auth Service login error: password is missing.`);
 
     try {
       const loginMethod = { email: user.email };
       const foundUser: User = await this.usersRepository
         .findOne({ where: { ...loginMethod, is_deleted: false } });
 
-      if (!foundUser || !(await bcrypt.compare(user.password, foundUser.password))) throw `Auth Service login error: invalid credentials.`;
+      if (!foundUser || !(await bcrypt.compare(user.password, foundUser.password))) throw new Error(`Auth Service login error: invalid credentials.`);
 
       const payload: JwtPayload = {
         id: foundUser.id,
@@ -33,7 +33,10 @@ export class AuthService {
       };
       const authToken: string = await this.jwtService.signAsync(payload);
 
-      return { authToken };
+      return {
+        id: foundUser.id,
+        authToken
+      };
 
     } catch (ex) {
       throw `Auth Service login error: ${ex.message}`
