@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Answer } from 'src/data/entities/answer.entity';
+import { UpdateAnswerDTO } from 'src/models/answer/update-answer.dto';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -22,5 +23,12 @@ export class AnswersService {
         } catch (ex) {
             throw `Answer Service error while collecting records: ${ex.message}`
         }
+    }
+
+    public async updateAnswer(answerInfo: UpdateAnswerDTO): Promise<string> {
+        const answer: Answer = await this.answerRepository.findOne({where: { id: answerInfo.id }});        
+        await this.answerRepository.update(answerInfo.id, { ...answer, ...answerInfo });
+
+        return 'Updated successfully.'
     }
 }
