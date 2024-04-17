@@ -18,7 +18,7 @@ export class User {
     @Column({ type: 'nvarchar', nullable: false, length: 512 })
     password: string;
 
-    @Column({ type: 'varchar', nullable: false, default: 'user' })
+    @Column({ type: 'varchar', nullable: false, default: 'User' })
     public role: string;
 
     @Column({ type: 'tinyint', nullable: false, default: false })
