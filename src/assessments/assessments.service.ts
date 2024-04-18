@@ -50,7 +50,7 @@ export class AssessmentsService {
             .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
             .getOne()
             
-            if (ongoingAssessment) throw new Error('You can only have one active assessment.') 
+            // if (ongoingAssessment) throw new Error('You can only have one active assessment.') 
             
             let newAssessment = await this.assessmentRepository.createQueryBuilder()
                 .insert()

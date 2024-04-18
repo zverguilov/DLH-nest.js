@@ -13,6 +13,9 @@ export class QuestionInstance {
     @Column({ type: 'nvarchar', nullable: true, length: 1024 })
     selected_asnwers: string;
 
+    @Column({ type: "integer", nullable: false, default: 1 })
+    correct_answers: number;
+
     @ManyToOne(type => Question, question => question.instances)
     public question: Promise<Question>
 

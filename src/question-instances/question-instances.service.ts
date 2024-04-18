@@ -11,25 +11,27 @@ import { Repository } from 'typeorm';
 export class QuestionInstancesService {
     public constructor(
         @InjectRepository(QuestionInstance) private readonly questionInstanceRepository: Repository<QuestionInstance>,
-        private readonly answersService: AnswersService
+        private readonly answersService: AnswersService,
     ) { }
 
     public async getQuestionInstancePackage(assessmentID: string, questionNumber: number): Promise<GetQuestionInstanceDTO> {
-        let questionInstance = await this.questionInstanceRepository.createQueryBuilder('question_instance')
-            .leftJoin('question_instance.question', 'question')
-            .leftJoin('question.answers', 'answer')
-            .where('question_instance.assessment = :id', { id: assessmentID })
-            .select([
-                'question_instance.id',
-                'question.id',
-                'question.body',
-                'answer.id',
-                'answer.body'
-            ])
-            .orderBy('question_instance.id', 'ASC')
-            .skip(questionNumber)
-            .take(1)
-            .getOne()
+        
+        let questionInstance: GetQuestionInstanceDTO = await this.questionInstanceRepository.createQueryBuilder('question_instance')
+        .leftJoin('question_instance.question', 'question')
+        .leftJoin('question.answers', 'answer')
+        .where('question_instance.assessment = :id', { id: assessmentID })
+        .select([
+            'question_instance.id',
+            'question_instance.correct_answers',
+            'question.id',
+            'question.body',
+            'answer.id',
+            'answer.body'
+        ])
+        .orderBy('question_instance.id', 'ASC')
+        .skip(questionNumber)
+        .take(1)
+        .getOne()
 
         return questionInstance;
     }
@@ -37,14 +39,16 @@ export class QuestionInstancesService {
     public async createQuestionInstances(questions: Question[], assessmentID: string): Promise<QuestionInstance[]> {
         try {
             let questionInstances = [];
-
+            
             for (let question of questions) {
+                let correctAnswers = (await this.answersService.getCorrectAnswers(question.id)).length;
                 let newQuestionInstance = await this.questionInstanceRepository.createQueryBuilder()
                     .insert()
                     .into('question_instance')
                     .values({
                         question: question.id,
-                        assessment: assessmentID
+                        assessment: assessmentID,
+                        correct_answers: correctAnswers
                     })
                     .execute()
 
