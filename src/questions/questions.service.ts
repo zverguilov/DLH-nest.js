@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Question } from 'src/data/entities/question.entity';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 import { FlagQuestionDTO } from 'src/models/question/flag-question.dto';
 import { UpdateQuestionDTO } from 'src/models/question/update-question.dto';
 import { Repository } from 'typeorm';
@@ -25,7 +26,7 @@ export class QuestionsService {
             return randomQuestions;
 
         } catch (ex) {
-            throw `Question Service mass retrieval error: ${ex.message}`
+            throw new CustomException(`Question Service mass retrieval error: ${ex.message}`, ex.message);
         }
     }
 
@@ -33,28 +34,33 @@ export class QuestionsService {
         try {
             return await this.questionRepository.findOne({ where: { id } });
         } catch (ex) {
-            throw `Question Service single retrieval error: ${ex.message}`
+            throw new CustomException(`Question Service single retrieval error: ${ex.message}`, ex.message);
         }
     }
 
     public async flagQuestion(id: string): Promise<string> {
         try {
-            let question:Question = await this.getQuestionByID(id);
+            let question: Question = await this.getQuestionByID(id);
 
             if (!question.is_flagged) question.is_flagged = true;
             await this.questionRepository.save(question);
 
-            return "Question flagged"
+            return "Question flagged";
 
         } catch (ex) {
-            throw `Question Service flag error: ${ex.message}`
+            throw new CustomException(`Question Service flag error: ${ex.message}`, ex.statusCode);
         }
     }
 
     public async updateQuestion(questionInfo: UpdateQuestionDTO): Promise<string> {
-        let question: Question = await this.getQuestionByID(questionInfo.id);        
-        await this.questionRepository.update(questionInfo.id, { ...question, ...questionInfo });
+        try {
+            let question: Question = await this.getQuestionByID(questionInfo.id);
+            await this.questionRepository.update(questionInfo.id, { ...question, ...questionInfo });
 
-        return 'Updated successfully.'
+            return 'Updated successfully.';
+
+        } catch (ex) {
+            throw new CustomException(`Question Service error while updating question: ${ex.message}`, ex.statusCode);
+        }
     }
 }

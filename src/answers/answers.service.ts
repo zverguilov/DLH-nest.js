@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Answer } from 'src/data/entities/answer.entity';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 import { UpdateAnswerDTO } from 'src/models/answer/update-answer.dto';
 import { Repository } from 'typeorm';
 
@@ -21,14 +22,19 @@ export class AnswersService {
             return correctAnswers;
 
         } catch (ex) {
-            throw `Answer Service error while collecting records: ${ex.message}`
+            throw new CustomEvent(`Answer Service error while collecting records: ${ex.message}`, ex.statusCode);
         }
     }
 
     public async updateAnswer(answerInfo: UpdateAnswerDTO): Promise<string> {
-        const answer: Answer = await this.answerRepository.findOne({where: { id: answerInfo.id }});        
-        await this.answerRepository.update(answerInfo.id, { ...answer, ...answerInfo });
+        try {
+            const answer: Answer = await this.answerRepository.findOne({ where: { id: answerInfo.id } });
+            await this.answerRepository.update(answerInfo.id, { ...answer, ...answerInfo });
 
-        return 'Updated successfully.'
+            return 'Updated successfully.';
+
+        } catch (ex) {
+            throw new CustomException(`Answer Service error while updating answer: ${ex.message}`, ex.statusCode);
+        }
     }
 }

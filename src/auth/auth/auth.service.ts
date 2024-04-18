@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './jwt-payload';
 import { UserRegDTO } from 'src/models/user/user-reg.dto';
 import { UserCreatedDTO } from 'src/models/user/user-created.dto';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 
 @Injectable()
 export class AuthService {
@@ -17,15 +18,15 @@ export class AuthService {
   ) { }
 
   public async login(user: UserLoginDTO): Promise<any> {
-    if (!user.email) throw new Error(`Auth Service login error: email is missing.`);
-    if (!user.password) throw new Error(`Auth Service login error: password is missing.`);
+    if (!user.email) throw new CustomException(`Auth Service login error: email is missing.`, 400);
+    if (!user.password) throw new CustomException(`Auth Service login error: password is missing.`, 400);
 
     try {
       const loginMethod = { email: user.email };
       const foundUser: User = await this.usersRepository
         .findOne({ where: { ...loginMethod, is_deleted: false } });
 
-      if (!foundUser || !(await bcrypt.compare(user.password, foundUser.password))) throw new Error(`Auth Service login error: invalid credentials.`);
+      if (!foundUser || !(await bcrypt.compare(user.password, foundUser.password))) throw new CustomException(`Auth Service login error: invalid credentials.`, 400);
 
       const payload: JwtPayload = {
         id: foundUser.id,
@@ -40,14 +41,14 @@ export class AuthService {
       };
 
     } catch (ex) {
-      throw `Auth Service login error: ${ex.message}`
+      throw new CustomException(`Auth Service login error: ${ex.message}`, ex.statusCode)
     }
   }
 
   public async reg(user: UserRegDTO): Promise<UserCreatedDTO> {
-    if (!user.email) throw `Auth Service error in registration: email is missing.`;
-    if (!user.full_name) throw `Auth Service error in registration: name is missing.`;
-    if (!user.password) throw `Auth Service error in registration: password is missing.`;
+    if (!user.email) throw new CustomException(`Auth Service error in registration: email is missing.`, 400);
+    if (!user.full_name) throw new CustomException(`Auth Service error in registration: name is missing.`, 400);
+    if (!user.password) throw new CustomException(`Auth Service error in registration: password is missing.`, 400);
 
     try {
       const loginMethod = { email: user.email };
@@ -69,7 +70,7 @@ export class AuthService {
       }
 
     } catch (ex) {
-      throw `Auth Service error in registration: ${ex.message}`
+      throw new CustomException(`Auth Service error in registration: ${ex.message}`, ex.statusCode)
     }
   }
 }

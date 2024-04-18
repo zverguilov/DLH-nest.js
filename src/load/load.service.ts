@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Question } from 'src/data/entities/question.entity';
 import { Answer } from 'src/data/entities/answer.entity';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 
 @Injectable()
 export class LoadService {
@@ -40,7 +41,7 @@ export class LoadService {
             return 'Data successfully loaded.'
 
         } catch (ex) {
-            throw `Load Service import error: ${ex.message}`
+            throw new CustomException(`Load Service import error: ${ex.message}`, ex.statusCode)
         }
     }
 
@@ -70,7 +71,7 @@ export class LoadService {
             return sheetData;
 
         } catch (ex) {
-            throw `Load Service reading error: ${ex.message}`
+            throw new CustomException(`Load Service reading error: ${ex.message}`, ex.statusCode)
         }
     }
 }

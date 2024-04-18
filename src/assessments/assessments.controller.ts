@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseFilters, UseGuards } from '@nestjs/common';
 import { AssessmentsService } from './assessments.service';
 import { Assessment } from 'src/data/entities/assessment.entity';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
+import { ErrorFilter } from 'src/middleware/filters/error.filter';
 
 @Controller('api/v1')
 export class AssessmentsController {
@@ -23,6 +24,7 @@ export class AssessmentsController {
     }
 
     @Post('assessment')
+    // @UseFilters(ErrorFilter)
     @UseGuards(AuthGuard())
     public async createRandomAssessment(@Body() payload: CreateAssessmentDTO): Promise<Assessment> {
         return await this.assessmentService.createRandomAssessment(payload);

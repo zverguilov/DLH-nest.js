@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { AnswersService } from 'src/answers/answers.service';
 import { Question } from 'src/data/entities/question.entity';
 import { QuestionInstance } from 'src/data/entities/question_instance.entity';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 import { MarkPayloadDTO } from 'src/models/others/mark-payload.dto';
 import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-question-instance.dto';
 import { Repository } from 'typeorm';
@@ -15,31 +16,35 @@ export class QuestionInstancesService {
     ) { }
 
     public async getQuestionInstancePackage(assessmentID: string, questionNumber: number): Promise<GetQuestionInstanceDTO> {
-        
-        let questionInstance: GetQuestionInstanceDTO = await this.questionInstanceRepository.createQueryBuilder('question_instance')
-        .leftJoin('question_instance.question', 'question')
-        .leftJoin('question.answers', 'answer')
-        .where('question_instance.assessment = :id', { id: assessmentID })
-        .select([
-            'question_instance.id',
-            'question_instance.correct_answers',
-            'question.id',
-            'question.body',
-            'answer.id',
-            'answer.body'
-        ])
-        .orderBy('question_instance.id', 'ASC')
-        .skip(questionNumber)
-        .take(1)
-        .getOne()
+        try {
+            let questionInstance: GetQuestionInstanceDTO = await this.questionInstanceRepository.createQueryBuilder('question_instance')
+                .leftJoin('question_instance.question', 'question')
+                .leftJoin('question.answers', 'answer')
+                .where('question_instance.assessment = :id', { id: assessmentID })
+                .select([
+                    'question_instance.id',
+                    'question_instance.correct_answers',
+                    'question.id',
+                    'question.body',
+                    'answer.id',
+                    'answer.body'
+                ])
+                .orderBy('question_instance.id', 'ASC')
+                .skip(questionNumber)
+                .take(1)
+                .getOne()
 
-        return questionInstance;
+            return questionInstance;
+
+        } catch (ex) {
+            throw new CustomException(`Question Instance Service error while generating question payload: ${ex.message}`, ex.statusCode)
+        }
     }
 
     public async createQuestionInstances(questions: Question[], assessmentID: string): Promise<QuestionInstance[]> {
         try {
             let questionInstances = [];
-            
+
             for (let question of questions) {
                 let correctAnswers = (await this.answersService.getCorrectAnswers(question.id)).length;
                 let newQuestionInstance = await this.questionInstanceRepository.createQueryBuilder()
@@ -58,7 +63,7 @@ export class QuestionInstancesService {
             return questionInstances;
 
         } catch (ex) {
-            throw `Question Instance Service insert error: ${ex.message}`
+            throw new CustomException(`Question Instance Service insert error: ${ex.message}`, ex.statusCode)
         }
     }
 
@@ -77,7 +82,7 @@ export class QuestionInstancesService {
             return allCorrect ? 'Correct!' : 'Incorrect!'
 
         } catch (ex) {
-            throw `Question Instance Service mark error: ${ex.message}`
+            throw new CustomException(`Question Instance Service mark error: ${ex.message}`, ex.statusCode)
         }
     }
 }

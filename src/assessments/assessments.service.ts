@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assessment } from 'src/data/entities/assessment.entity';
 import { QuestionsService } from 'src/questions/questions.service';
 import { Like, Repository } from 'typeorm';
 import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
 import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 
 @Injectable()
 export class AssessmentsService {
@@ -15,17 +16,22 @@ export class AssessmentsService {
     ) { }
 
     public async getActiveAssessment(userID: string): Promise<Assessment> {
-        let ongoingAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
-            .select([
-                'assessment.id',
-                'assessment.time_started',
-                'assessment.exam_type'
-            ])
-            .where('assessment.user = :user', { user: userID })
-            .andWhere('assessment.submitted = :submitted', { submitted: false })
-            .getOne()
+        try {
+            let ongoingAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
+                .select([
+                    'assessment.id',
+                    'assessment.time_started',
+                    'assessment.exam_type'
+                ])
+                .where('assessment.user = :user', { user: userID })
+                .andWhere('assessment.submitted = :submitted', { submitted: false })
+                .getOne()
 
             return ongoingAssessment
+
+        } catch (ex) {
+            throw new CustomException(`Assessment Service error while retrieving active assignment: ${ex.message}`, ex.statusCode);
+        }
     }
 
     public async getMyAssessments(userID: string): Promise<Assessment[]> {
@@ -38,20 +44,20 @@ export class AssessmentsService {
 
             return assessments
         } catch (ex) {
-            throw `Assessment Service mass retrieval error: ${ex.message}`
+            throw new CustomException(`Assessment Service mass retrieval error: ${ex.message}`, ex.statusCode);
         }
     }
 
     public async createRandomAssessment(payload: CreateAssessmentDTO): Promise<Assessment> {
         try {
             let ongoingAssessment = await this.assessmentRepository.createQueryBuilder('assessment')
-            .where('assessment.user = :user', { user: payload.user })
-            .andWhere('assessment.submitted = :submitted', { submitted: false })
-            .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
-            .getOne()
-            
-            // if (ongoingAssessment) throw new Error('You can only have one active assessment.') 
-            
+                .where('assessment.user = :user', { user: payload.user })
+                .andWhere('assessment.submitted = :submitted', { submitted: false })
+                .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
+                .getOne()
+
+            if (ongoingAssessment) throw new CustomException('You can only have one active assessment.', 400)
+
             let newAssessment = await this.assessmentRepository.createQueryBuilder()
                 .insert()
                 .into('assessment')
@@ -78,7 +84,7 @@ export class AssessmentsService {
             return fullAssessment;
 
         } catch (ex) {
-            throw `Assessment Service error while creating record: ${ex.message}`
+            throw new CustomException(`Assessment Service error while creating record: ${ex.message}`, ex.statusCode)
         }
     }
 }

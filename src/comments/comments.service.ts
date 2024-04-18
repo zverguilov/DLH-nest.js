@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Comment } from "src/data/entities/comment.entity";
+import { CustomException } from "src/middleware/exception/custom-exception";
 import { CommentCreatedDTO } from "src/models/comment/comment-created.dto";
 import { FlagQuestionDTO } from "src/models/question/flag-question.dto";
 import { QuestionsService } from "src/questions/questions.service";
@@ -33,7 +34,7 @@ export class CommentsService {
             }
 
         } catch (ex) {
-            throw `Comment Service flag error: ${ex.message}`
+            throw new CustomException(`Comment Service flag error: ${ex.message}`, ex.statusCode)
         }
     }
 }

@@ -1,6 +1,6 @@
 import { Body, Controller, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RoleGuard } from 'src/guards/role.guard';
+import { RoleGuard } from 'src/middleware/guards/role.guard';
 import { AnswersService } from './answers.service';
 import { UpdateAnswerDTO } from 'src/models/answer/update-answer.dto';
 

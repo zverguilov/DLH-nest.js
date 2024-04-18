@@ -1,7 +1,7 @@
 import { Controller, Post, UseGuards } from '@nestjs/common';
 import { LoadService } from './load.service';
 import { AuthGuard } from '@nestjs/passport';
-import { RoleGuard } from 'src/guards/role.guard';
+import { RoleGuard } from 'src/middleware/guards/role.guard';
 
 @Controller('api/v1/load')
 export class LoadController {

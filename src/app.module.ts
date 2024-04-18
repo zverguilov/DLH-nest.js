@@ -13,6 +13,8 @@ import { AssessmentsModule } from './assessments/assessments.module';
 import { CommentsModule } from './comments/comments.module';
 import { AuthService } from './auth/auth/auth.service';
 import { AuthModule } from './auth/auth/auth.module';
+import { APP_FILTER } from '@nestjs/core';
+import { ErrorFilter } from './middleware/filters/error.filter';
 
 @Module({
   imports: [
@@ -40,6 +42,12 @@ import { AuthModule } from './auth/auth/auth.module';
     }),
     LoadModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: ErrorFilter
+    }
+  ],
 })
 export class AppModule {}

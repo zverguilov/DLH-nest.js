@@ -12,6 +12,8 @@ import { Answer } from 'src/data/entities/answer.entity';
 import { PassportModule } from '@nestjs/passport';
 import { User } from 'src/data/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
+import { APP_FILTER } from '@nestjs/core';
+import { ErrorFilter } from 'src/middleware/filters/error.filter';
 
 @Module({
   imports: [
@@ -23,6 +25,12 @@ import { UsersService } from 'src/users/users.service';
     TypeOrmModule.forFeature([Answer])
   ],
   controllers: [AssessmentsController],
-  providers: [AssessmentsService, QuestionsService, QuestionInstancesService, AnswersService, UsersService]
+  providers: [
+    AssessmentsService,
+    QuestionsService,
+    QuestionInstancesService, 
+    AnswersService, 
+    UsersService
+  ]
 })
 export class AssessmentsModule { }
