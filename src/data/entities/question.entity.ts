@@ -1,25 +1,33 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Exclude } from 'class-transformer';
 import { Answer } from "./answer.entity";
-import { type } from "os";
-import { any } from "joi";
-import { QuestionInstance } from "./question-instance.entity";
+import { QuestionInstance } from "./question_instance.entity";
+import { Comment } from "./comment.entity";
 
 
 @Entity('question')
 export class Question {
-    @PrimaryGeneratedColumn()
-    public id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
 
-    @Column({ type: 'nvarchar', nullable: false, length: 4096 })
+    @Column({ type: 'nvarchar', length: 4096 })
     public body: string;
 
-    @Column({ type: 'nvarchar', nullable: false, length: 16 })
+    @Column({ type: 'nvarchar', nullable: false, length: 16})
     public category: string
+
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public is_flagged: boolean;
+
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public is_deleted: boolean;
 
     @OneToMany(type => Answer, answer => answer.question)
     public answers: Promise<Answer[]>
 
     @OneToMany(type => QuestionInstance, questionInstance => questionInstance.question)
     public instances: Promise<QuestionInstance[]>
+
+    @OneToMany(type => Comment, comment => comment.question)
+    public comments: Promise<Comment[]>
 }

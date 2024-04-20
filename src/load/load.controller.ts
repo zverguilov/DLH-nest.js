@@ -1,5 +1,7 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post, UseGuards } from '@nestjs/common';
 import { LoadService } from './load.service';
+import { AuthGuard } from '@nestjs/passport';
+import { RoleGuard } from 'src/middleware/guards/role.guard';
 
 @Controller('api/v1/load')
 export class LoadController {
@@ -8,7 +10,8 @@ export class LoadController {
     ) { }
 
     @Post('data')
-    public async loadData(): Promise<void> {
+    @UseGuards(AuthGuard(), RoleGuard)
+    public async loadData(): Promise<string> {
         return await this.loadService.loadData();
     }
 }

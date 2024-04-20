@@ -2,6 +2,7 @@ import * as Joi from 'joi';
 import * as dotenv from 'dotenv';
 import { Injectable } from '@nestjs/common';
 import { DatabaseType } from 'typeorm';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 
 export interface EnvConfig {
   [key: string]: string;
@@ -73,7 +74,7 @@ export class ConfigService {
     );
 
     if (error) {
-      throw new Error(`Config validation error: ${error.message}`);
+      throw new CustomException(`Config validation error: ${error.message}`, 500);
     }
 
     return validatedEnvConfig;

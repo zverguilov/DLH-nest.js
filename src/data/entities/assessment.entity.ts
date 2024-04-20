@@ -1,7 +1,8 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Exclude } from 'class-transformer';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { type } from "os";
-import { QuestionInstance } from "./question-instance.entity";
+import { QuestionInstance } from "./question_instance.entity";
+import { GetQuestionInstanceDTO } from "src/models/question-instance/get-question-instance.dto";
+import { User } from "./user.entity";
 
 @Entity('assessment')
 export class Assessment {
@@ -9,21 +10,18 @@ export class Assessment {
     public id: string;
 
     @Column({ type: 'nvarchar', nullable: false, length: 10 })
-    public number: string;
-
-    @Column({ type: 'nvarchar', nullable: false, length: 10 })
-    public examType: string;
+    public exam_type: string;
 
     @Column({ type: 'integer', nullable: true })
-    public grade: string;
+    public grade: number;
 
     @Column({ type: 'datetime' })
-    public timeStarted: Date;
+    public time_started: Date;
 
-    @Column({ type: 'datetime' })
-    public timeEnded: Date;
+    @Column({ type: 'datetime', nullable: true })
+    public time_ended: Date;
 
-    @Column({ type: 'nvarchar', length: 32 })
+    @Column({ type: 'nvarchar', length: 32, nullable: false, default: 'Draft' })
     public status: string;
 
     @Column({ type: 'tinyint', default: false })
@@ -32,6 +30,12 @@ export class Assessment {
     @Column({ type: 'tinyint', default: false })
     public pass: boolean;
 
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public is_deleted: boolean;
+
     @OneToMany(type => QuestionInstance, questionInstance => questionInstance.assessment)
-    public questionInstances: Promise<QuestionInstance[]>
+    public question_instances: Promise<GetQuestionInstanceDTO[]>;
+
+    @ManyToOne(type => User, user => user.assessments)
+    public user: Promise<User>;
 }
