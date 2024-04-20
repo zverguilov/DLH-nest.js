@@ -6,6 +6,7 @@ import { Like, Repository } from 'typeorm';
 import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
 import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
 import { CustomException } from 'src/middleware/exception/custom-exception';
+import { PASSING_GRADE } from 'src/constants';
 
 @Injectable()
 export class AssessmentsService {
@@ -14,6 +15,27 @@ export class AssessmentsService {
         private readonly questionsService: QuestionsService,
         private readonly questionInstanceService: QuestionInstancesService
     ) { }
+
+    public async submitAssessment(assessmentID: string): Promise<Assessment> {
+        try {
+            let assessment: Assessment = await this.assessmentRepository.findOne({ where: { id: assessmentID } })
+            let questionInstances = await this.questionInstanceService.getQIStatus(assessmentID);
+    
+            const updateAssessment: Partial<Assessment> = {
+                grade: (questionInstances.reduce((a, c) => (a += c.is_correct ? 1 : 0, a), 0) / 60) * 100,
+                time_ended: new Date(),
+                status: 'Finished',
+                submitted: true,
+                pass: Math.ceil(((questionInstances.reduce((a, c) => (a += c.is_correct ? 1 : 0, a), 0) / 60) * 100)) >= PASSING_GRADE ? true : false
+            }
+    
+            await this.assessmentRepository.update(assessmentID, { ...assessment, ...updateAssessment })
+            return await this.assessmentRepository.findOne({ where: { id: assessmentID } });
+
+        } catch (ex) {
+            throw new CustomException(`Assessment Service error while grading assessment: ${ex.message}`, ex.statusCode);
+        }
+    }
 
     public async getActiveAssessment(userID: string): Promise<Assessment> {
         try {
@@ -30,7 +52,7 @@ export class AssessmentsService {
             return ongoingAssessment
 
         } catch (ex) {
-            throw new CustomException(`Assessment Service error while retrieving active assignment: ${ex.message}`, ex.statusCode);
+            throw new CustomException(`Assessment Service error while retrieving active assessment: ${ex.message}`, ex.statusCode);
         }
     }
 

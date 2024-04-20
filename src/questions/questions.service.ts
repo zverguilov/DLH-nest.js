@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ASSESSMENT_QUESTIONS } from 'src/constants';
 import { Question } from 'src/data/entities/question.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { FlagQuestionDTO } from 'src/models/question/flag-question.dto';
@@ -20,7 +21,7 @@ export class QuestionsService {
                 .andWhere('question.is_deleted = :is_deleted', { is_deleted: false })
                 .select(['question.id', 'question.body', 'answer.id', 'answer.body'])
                 .orderBy('RAND()')
-                .take(60)
+                .take(ASSESSMENT_QUESTIONS)
                 .getMany()
 
             return randomQuestions;

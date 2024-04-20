@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseFilters, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, UseFilters, UseGuards } from '@nestjs/common';
 import { AssessmentsService } from './assessments.service';
 import { Assessment } from 'src/data/entities/assessment.entity';
 import { AuthGuard } from '@nestjs/passport';
@@ -24,9 +24,14 @@ export class AssessmentsController {
     }
 
     @Post('assessment')
-    // @UseFilters(ErrorFilter)
     @UseGuards(AuthGuard())
     public async createRandomAssessment(@Body() payload: CreateAssessmentDTO): Promise<Assessment> {
         return await this.assessmentService.createRandomAssessment(payload);
+    }
+
+    @Put('assessment/submit/:assessmentID')
+    @UseGuards(AuthGuard())
+    public async submitAssessment(@Param('assessmentID') assessmentID: string): Promise<Assessment> {
+        return await this.assessmentService.submitAssessment(assessmentID);
     }
 }

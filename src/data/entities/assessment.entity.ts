@@ -13,7 +13,7 @@ export class Assessment {
     public exam_type: string;
 
     @Column({ type: 'integer', nullable: true })
-    public grade: string;
+    public grade: number;
 
     @Column({ type: 'datetime' })
     public time_started: Date;

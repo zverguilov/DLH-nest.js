@@ -6,6 +6,8 @@ import { QuestionInstance } from 'src/data/entities/question_instance.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { MarkPayloadDTO } from 'src/models/others/mark-payload.dto';
 import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-question-instance.dto';
+import { QuestionInstanceStatusDTO } from 'src/models/question-instance/question-instance-status.dto';
+import { ReportQuestionInstanceDTO } from 'src/models/question-instance/report-question-instance.dto';
 import { ReviewQuestionInstanceDTO } from 'src/models/question-instance/review-question-instance.dto';
 import { Repository } from 'typeorm';
 
@@ -15,6 +17,43 @@ export class QuestionInstancesService {
         @InjectRepository(QuestionInstance) private readonly questionInstanceRepository: Repository<QuestionInstance>,
         private readonly answersService: AnswersService,
     ) { }
+
+    public async getQIStatus(assessmentID: string): Promise<QuestionInstanceStatusDTO[]> {
+        try {
+            return await this.questionInstanceRepository.createQueryBuilder('question_instance')
+            .where('question_instance.assessment = :id', { id: assessmentID })
+            .select('question_instance.is_correct')
+            .getMany()
+
+        } catch (ex) {
+            throw new CustomException(`Question Instance Service error while retrieving question instances status: ${ex.message}`, ex.statusCode)
+        }
+    }
+
+    public async getReport(assessmentID: string): Promise<ReportQuestionInstanceDTO[]> {
+        try {
+            return await this.questionInstanceRepository.createQueryBuilder('question_instance')
+                .where('question_instance.assessment = :id', { id: assessmentID })
+                .andWhere('question_instance.is_correct = false')
+                .leftJoin('question_instance.question', 'question')
+                .leftJoin('question.answers', 'answer')
+                .select([
+                    'question_instance.id',
+                    'question_instance.assessment_index',
+                    'question_instance.correct_answers',
+                    'question_instance.selected_answers',
+                    'question.id',
+                    'question.body',
+                    'answer.id',
+                    'answer.body',
+                    'answer.is_correct'
+                ])
+                .getMany();
+
+        } catch (ex) {
+            throw new CustomException(`Question Instance Service error while generating assessment report: ${ex.message}`, ex.statusCode)
+        }
+    }
 
     public async getReviewStatus(assessmentID: string): Promise<ReviewQuestionInstanceDTO[]> {
         try {
@@ -36,7 +75,7 @@ export class QuestionInstancesService {
 
     public async getQuestionInstancePackage(assessmentID: string, questionNumber: number): Promise<GetQuestionInstanceDTO> {
         try {
-            let questionInstance: GetQuestionInstanceDTO = await this.questionInstanceRepository.createQueryBuilder('question_instance')
+            return await this.questionInstanceRepository.createQueryBuilder('question_instance')
                 .leftJoin('question_instance.question', 'question')
                 .leftJoin('question.answers', 'answer')
                 .where('question_instance.assessment = :id', { id: assessmentID })
@@ -54,8 +93,6 @@ export class QuestionInstancesService {
                 .skip(questionNumber)
                 .take(1)
                 .getOne()
-
-            return questionInstance;
 
         } catch (ex) {
             throw new CustomException(`Question Instance Service error while generating question payload: ${ex.message}`, ex.statusCode)

@@ -12,5 +12,5 @@ export class GetQuestionInstanceDTO {
     public selected_answers?: string[];
 
     @Expose()
-    assessment_index: number;
+    public assessment_index: number;
 }
