@@ -2,8 +2,11 @@ import { Expose } from "class-transformer";
 
 export class MarkPayloadDTO {
     @Expose()
-    public selectedAnswers!: [];
+    public selected_answers?: [];
 
     @Expose()
-    public questionInstanceID!: string;
+    public questionID!: string;
+
+    @Expose()
+    public to_review?: boolean;
 }

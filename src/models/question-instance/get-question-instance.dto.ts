@@ -7,4 +7,10 @@ export class GetQuestionInstanceDTO {
 
     @Expose()
     public correct_answers: number;
+
+    @Expose()
+    public selected_answers?: string[];
+
+    @Expose()
+    assessment_index: number;
 }

@@ -6,6 +6,7 @@ import { QuestionInstance } from 'src/data/entities/question_instance.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { MarkPayloadDTO } from 'src/models/others/mark-payload.dto';
 import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-question-instance.dto';
+import { ReviewQuestionInstanceDTO } from 'src/models/question-instance/review-question-instance.dto';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -14,6 +15,24 @@ export class QuestionInstancesService {
         @InjectRepository(QuestionInstance) private readonly questionInstanceRepository: Repository<QuestionInstance>,
         private readonly answersService: AnswersService,
     ) { }
+
+    public async getReviewStatus(assessmentID: string): Promise<ReviewQuestionInstanceDTO[]> {
+        try {
+            return await this.questionInstanceRepository.createQueryBuilder('question_instance')
+                .where('question_instance.assessment = :id', { id: assessmentID })
+                .select([
+                    'question_instance.id',
+                    'question_instance.correct_answers',
+                    'question_instance.to_review',
+                    'question_instance.assessment_index'
+                ])
+                .orderBy('assessment_index', 'ASC')
+                .getMany()
+
+        } catch (ex) {
+            throw new CustomException(`Question Instance Service error while generating review report: ${ex.message}`, ex.statusCode)
+        }
+    }
 
     public async getQuestionInstancePackage(assessmentID: string, questionNumber: number): Promise<GetQuestionInstanceDTO> {
         try {
@@ -24,12 +43,14 @@ export class QuestionInstancesService {
                 .select([
                     'question_instance.id',
                     'question_instance.correct_answers',
+                    'question_instance.selected_answers',
+                    'question_instance.assessment_index',
                     'question.id',
                     'question.body',
                     'answer.id',
                     'answer.body'
                 ])
-                .orderBy('question_instance.id', 'ASC')
+                .orderBy('question_instance.assessment_index', 'ASC')
                 .skip(questionNumber)
                 .take(1)
                 .getOne()
@@ -53,7 +74,8 @@ export class QuestionInstancesService {
                     .values({
                         question: question.id,
                         assessment: assessmentID,
-                        correct_answers: correctAnswers
+                        correct_answers: correctAnswers,
+                        assessment_index: questions.indexOf(question)
                     })
                     .execute()
 
@@ -69,17 +91,23 @@ export class QuestionInstancesService {
 
     public async mark(instanceID: string, payload: MarkPayloadDTO): Promise<string> {
         try {
-            let questionInstance = await this.questionInstanceRepository.createQueryBuilder('question_instance')
+            let allCorrect = false;
+            let questionInstance: QuestionInstance = await this.questionInstanceRepository.createQueryBuilder('question_instance')
                 .where('question_instance.id = :id', { id: instanceID })
                 .getOne();
 
-            let correctAnswers = (await this.answersService.getCorrectAnswers(payload.questionInstanceID)).map(answer => answer.id);
-            let allCorrect = payload.selectedAnswers.every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selectedAnswers.length;
+            if (payload.selected_answers && !payload.selected_answers.length) payload.selected_answers = null;
 
-            questionInstance.is_correct = allCorrect;
-            await this.questionInstanceRepository.save(questionInstance);
+            if (payload.selected_answers?.length) {
+                let correctAnswers = (await this.answersService.getCorrectAnswers(payload.questionID)).map(answer => answer.id);
+                allCorrect = payload.selected_answers.length && payload.selected_answers.every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selected_answers.length;
+                questionInstance.is_correct = allCorrect;
+            }
+            delete payload.questionID;
 
-            return allCorrect ? 'Correct!' : 'Incorrect!'
+            await this.questionInstanceRepository.update(instanceID, { ...questionInstance, ...payload });
+
+            return 'Question instance updated.'
 
         } catch (ex) {
             throw new CustomException(`Question Instance Service mark error: ${ex.message}`, ex.statusCode)

@@ -5,16 +5,22 @@ import { Assessment } from "./assessment.entity";
 @Entity('question_instance')
 export class QuestionInstance {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    public id: string;
+
+    @Column({ type: 'integer', nullable: true })
+    public assessment_index: number;
 
     @Column({ type: 'tinyint', nullable: false, default: false })
-    is_correct: boolean;
+    public is_correct: boolean;
 
     @Column({ type: 'nvarchar', nullable: true, length: 1024 })
-    selected_asnwers: string;
+    public selected_answers?: string[];
 
     @Column({ type: "integer", nullable: false, default: 1 })
-    correct_answers: number;
+    public correct_answers: number;
+
+    @Column({ type: 'tinyint', nullable: false, default: false })
+    public to_review: boolean;
 
     @ManyToOne(type => Question, question => question.instances)
     public question: Promise<Question>
