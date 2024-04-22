@@ -9,7 +9,7 @@ export class GetQuestionInstanceDTO {
     public correct_answers: number;
 
     @Expose()
-    public selected_answers?: string[];
+    public selected_answers?: string;
 
     @Expose()
     public assessment_index: number;

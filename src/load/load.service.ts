@@ -29,11 +29,15 @@ export class LoadService {
                     let answerMap = e[4].split(',');
 
                     for (let a of answers) {
-                        let newAnswer = this.answerRepository.create();
-                        newAnswer.body = a;
-                        newAnswer.is_correct = answerMap[answers.indexOf(a)] == 1;
-                        newAnswer.question = createdQuestion;
-                        let createdAnswer = await this.answerRepository.save(newAnswer)
+                        await this.answerRepository.createQueryBuilder()
+                        .insert()
+                        .into('answer')
+                        .values({
+                            body: a,
+                            is_correct: answerMap[answers.indexOf(a)] == 1,
+                            question: createdQuestion
+                        })
+                        .execute();
                     }
                 }
             }

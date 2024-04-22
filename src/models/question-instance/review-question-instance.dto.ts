@@ -5,7 +5,7 @@ export class ReviewQuestionInstanceDTO {
     id: string;
 
     @Expose()
-    selected_answers?: string[]
+    selected_answers?: string;
 
     @Expose()
     to_review: boolean;

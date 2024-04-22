@@ -21,9 +21,9 @@ export class QuestionInstancesService {
     public async getQIStatus(assessmentID: string): Promise<QuestionInstanceStatusDTO[]> {
         try {
             return await this.questionInstanceRepository.createQueryBuilder('question_instance')
-            .where('question_instance.assessment = :id', { id: assessmentID })
-            .select('question_instance.is_correct')
-            .getMany()
+                .where('question_instance.assessment = :id', { id: assessmentID })
+                .select('question_instance.is_correct')
+                .getMany()
 
         } catch (ex) {
             throw new CustomException(`Question Instance Service error while retrieving question instances status: ${ex.message}`, ex.statusCode)
@@ -135,12 +135,11 @@ export class QuestionInstancesService {
 
             if (payload.selected_answers && !payload.selected_answers.length) payload.selected_answers = null;
 
-            if (payload.selected_answers?.length) {
-                let correctAnswers = (await this.answersService.getCorrectAnswers(payload.questionID)).map(answer => answer.id);
-                allCorrect = payload.selected_answers.length && payload.selected_answers.every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selected_answers.length;
-                questionInstance.is_correct = allCorrect;
+            if (payload.selected_answers) {
+                let correctAnswers = (await this.answersService.getCorrectAnswers(payload.question_id)).map(answer => answer.id);
+                questionInstance.is_correct = payload.selected_answers.split(',').every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selected_answers.split(',').length;                
             }
-            delete payload.questionID;
+            delete payload.question_id;
 
             await this.questionInstanceRepository.update(instanceID, { ...questionInstance, ...payload });
 

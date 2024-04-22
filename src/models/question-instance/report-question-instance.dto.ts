@@ -14,5 +14,5 @@ export class ReportQuestionInstanceDTO {
     public is_correct: boolean;
 
     @Expose()
-    public selected_answers?: string[];
+    public selected_answers?: string;
 }

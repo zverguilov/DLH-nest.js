@@ -14,7 +14,7 @@ export class QuestionInstance {
     public is_correct: boolean;
 
     @Column({ type: 'nvarchar', nullable: true, length: 1024 })
-    public selected_answers?: string[];
+    public selected_answers?: string;
 
     @Column({ type: "integer", nullable: false, default: 1 })
     public correct_answers: number;
