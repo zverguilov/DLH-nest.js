@@ -4,6 +4,7 @@ import { ASSESSMENT_QUESTIONS } from 'src/constants';
 import { Question } from 'src/data/entities/question.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { FlagQuestionDTO } from 'src/models/question/flag-question.dto';
+import { ReviewFlaggedQuestionDTO } from 'src/models/question/review-flagged-question.dto';
 import { UpdateQuestionDTO } from 'src/models/question/update-question.dto';
 import { Repository } from 'typeorm';
 
@@ -12,6 +13,32 @@ export class QuestionsService {
     public constructor(
         @InjectRepository(Question) private readonly questionRepository: Repository<Question>,
     ) { }
+
+    public async getFlaggedQuestions(): Promise<ReviewFlaggedQuestionDTO[]> {
+        try {
+            return await this.questionRepository.createQueryBuilder('question')
+            .where('is_flagged = true')
+            .leftJoin('question.answers', 'answer')
+            .leftJoin('question.comments', 'comment')
+            .leftJoin('comment.user', 'user')
+            .select([
+                'question.id',
+                'question.body',
+                'question.category',
+                'question.is_flagged',
+                'answer.id',
+                'answer.body',
+                'answer.is_correct',
+                'comment.id',
+                'comment.content',
+                'user.full_name'
+            ])
+            .getMany()
+
+        } catch (ex) {
+            throw new CustomException(`Question Service error while retrieving flagged questions: ${ex.message}`, ex.message);
+        }
+    }
 
     public async getRandomBatch(category: string): Promise<Question[]> {
         try {
