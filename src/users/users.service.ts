@@ -12,6 +12,18 @@ export class UsersService {
         @InjectRepository(User) private readonly userRepository: Repository<User>
     ) { }
 
+    public async getAllUsers(): Promise<UserGetDTO[]> {
+        return await this.userRepository.createQueryBuilder('user')
+        .where('is_deleted = false')
+        .select([
+            'user.id',
+            'user.full_name',
+            'user.email',
+            'user.role'
+        ])
+        .getMany()
+    }
+
     public async retrieveUser(id: string): Promise<User> {
         try {
             return await this.userRepository.findOne({ where: { id } });

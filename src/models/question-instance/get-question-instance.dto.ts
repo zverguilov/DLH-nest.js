@@ -9,6 +9,9 @@ export class GetQuestionInstanceDTO {
     public correct_answers: number;
 
     @Expose()
+    public to_review: boolean;
+
+    @Expose()
     public selected_answers?: string;
 
     @Expose()

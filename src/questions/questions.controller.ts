@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { AuthGuard } from '@nestjs/passport';
 import { FlagQuestionDTO } from 'src/models/question/flag-question.dto';
@@ -12,6 +12,12 @@ export class QuestionsController {
     public constructor (
         private readonly questionsService: QuestionsService
     ) { }
+
+    @Get('question')
+    @UseGuards(AuthGuard(), RoleGuard)
+    public async getAllQuestions(@Query() query: {category}): Promise<ReviewFlaggedQuestionDTO[]> {
+        return this.questionsService.getAllQuestions(query.category);
+    }
 
     @Get('question/flagged')
     @UseGuards(AuthGuard(), RoleGuard)

@@ -61,7 +61,7 @@ export class QuestionInstancesService {
                 .where('question_instance.assessment = :id', { id: assessmentID })
                 .select([
                     'question_instance.id',
-                    'question_instance.correct_answers',
+                    'question_instance.selected_answers',
                     'question_instance.to_review',
                     'question_instance.assessment_index'
                 ])
@@ -84,6 +84,7 @@ export class QuestionInstancesService {
                     'question_instance.correct_answers',
                     'question_instance.selected_answers',
                     'question_instance.assessment_index',
+                    'question_instance.to_review',
                     'question.id',
                     'question.body',
                     'answer.id',

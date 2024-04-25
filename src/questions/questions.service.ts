@@ -14,26 +14,50 @@ export class QuestionsService {
         @InjectRepository(Question) private readonly questionRepository: Repository<Question>,
     ) { }
 
+    public async getAllQuestions(category: string): Promise<ReviewFlaggedQuestionDTO[]> {
+        try {
+            let queryBuilder = this.questionRepository.createQueryBuilder('question')
+                .where('question.is_deleted = false')
+                .leftJoin('question.answers', 'answer')
+                .select([
+                    'question.id',
+                    'question.body',
+                    'question.category',
+                    'question.is_flagged',
+                    'answer.id',
+                    'answer.body',
+                    'answer.is_correct',
+                ])
+
+            if (category) queryBuilder.andWhere('category = :category', { category });
+
+            return await queryBuilder.getMany();
+
+        } catch (ex) {
+            throw new CustomException(`Question Service error while retrieving questions: ${ex.message}`, ex.message);
+        }
+    }
+
     public async getFlaggedQuestions(): Promise<ReviewFlaggedQuestionDTO[]> {
         try {
             return await this.questionRepository.createQueryBuilder('question')
-            .where('is_flagged = true')
-            .leftJoin('question.answers', 'answer')
-            .leftJoin('question.comments', 'comment')
-            .leftJoin('comment.user', 'user')
-            .select([
-                'question.id',
-                'question.body',
-                'question.category',
-                'question.is_flagged',
-                'answer.id',
-                'answer.body',
-                'answer.is_correct',
-                'comment.id',
-                'comment.content',
-                'user.full_name'
-            ])
-            .getMany()
+                .where('is_flagged = true')
+                .leftJoin('question.answers', 'answer')
+                .leftJoin('question.comments', 'comment')
+                .leftJoin('comment.user', 'user')
+                .select([
+                    'question.id',
+                    'question.body',
+                    'question.category',
+                    'question.is_flagged',
+                    'answer.id',
+                    'answer.body',
+                    'answer.is_correct',
+                    'comment.id',
+                    'comment.content',
+                    'user.full_name'
+                ])
+                .getMany()
 
         } catch (ex) {
             throw new CustomException(`Question Service error while retrieving flagged questions: ${ex.message}`, ex.message);

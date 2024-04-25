@@ -11,6 +11,12 @@ export class UsersController {
         private readonly usersService: UsersService
     ) { }
 
+    @Get('users')
+    @UseGuards(AuthGuard(), RoleGuard)
+    public async getAllUsers(): Promise<UserGetDTO[]> {
+        return this.usersService.getAllUsers();
+    }
+
     @Get('users/:userID')
     @UseGuards(AuthGuard())
     public async getUserByID(@Param('userID') userID: string): Promise<UserGetDTO> {
