@@ -58,7 +58,7 @@ export class LoadService {
         }
     }
 
-    private async readCell(fileBuffer) {
+    private async readCell(fileBuffer: string) {
         try {
             const Excel = require('exceljs');
 
