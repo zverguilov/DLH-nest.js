@@ -12,9 +12,9 @@ export class LoadService {
         @InjectRepository(Answer) private readonly answerRepository: Repository<Answer>
     ) { }
 
-    public async loadData(): Promise<string> {
+    public async loadData(fileBuffer: string): Promise<string> {
         try {
-            const sheetData = await this.readCell('src/load/data-source/ExamDumps.xlsx');
+            const sheetData = await this.readCell(fileBuffer);
             const sheets = Object.keys(sheetData);
 
             for (let sheet of sheets) {
@@ -23,38 +23,47 @@ export class LoadService {
                     let newQuestion = await this.questionRepository.create();
                     newQuestion.body = e[2];
                     newQuestion.category = e[5];
-                    let createdQuestion = await this.questionRepository.save(newQuestion);
 
-                    let answers = e[3].split(' / ');
-                    let answerMap = e[4].split(',');
+                    try {
+                        let createdQuestion = await this.questionRepository.save(newQuestion);
 
-                    for (let a of answers) {
-                        await this.answerRepository.createQueryBuilder()
-                        .insert()
-                        .into('answer')
-                        .values({
-                            body: a,
-                            is_correct: answerMap[answers.indexOf(a)] == 1,
-                            question: createdQuestion
-                        })
-                        .execute();
-                    }
+                        let answers = e[3].split(' / ');
+                        let answerMap = e[4].split(',');
+
+                        for (let a of answers) {
+                            await this.answerRepository.createQueryBuilder()
+                                .insert()
+                                .into('answer')
+                                .values({
+                                    body: a,
+                                    is_correct: answerMap[answers.indexOf(a)] == 1,
+                                    question: createdQuestion
+                                })
+                                .execute();
+                        }
+                    } catch (ex) {
+                        if (ex.code === '23505' && ex.detail.includes('already exists')) {
+                            console.log(`Duplicate question found: ${newQuestion.body}. Skipping.`);
+                        } else {
+                            console.log(`Error saving question and answers: ${ex.message}`);
+                        }
+                    }                    
                 }
             }
 
             return 'Data successfully loaded.'
 
         } catch (ex) {
-            throw new CustomException(`Load Service import error: ${ex.message}`, ex.statusCode)
+            console.log(new CustomException(`Load Service import error: ${ex.message}`, ex.statusCode))
         }
     }
 
-    private async readCell(filename) {
+    private async readCell(fileBuffer) {
         try {
             const Excel = require('exceljs');
 
             let workBook = new Excel.Workbook();
-            await workBook.xlsx.readFile(filename);
+            await workBook.xlsx.load(fileBuffer);
 
             const sheetNames = workBook.worksheets.map(sheet => sheet.name);
 

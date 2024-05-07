@@ -10,7 +10,7 @@ export class Question {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ type: 'nvarchar', length: 4096 })
+    @Column({ type: 'nvarchar', length: 768, unique: true })
     public body: string;
 
     @Column({ type: 'nvarchar', nullable: false, length: 16})

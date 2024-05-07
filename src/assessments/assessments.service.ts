@@ -62,6 +62,7 @@ export class AssessmentsService {
                 .where('assessment.user = :user', { user: userID })
                 .andWhere('assessment.submitted = :submitted', { submitted: true })
                 .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
+                .orderBy('time_started', 'DESC')
                 .getMany()
 
             return assessments

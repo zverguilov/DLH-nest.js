@@ -1,7 +1,10 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
+import { Controller, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { LoadService } from './load.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RoleGuard } from 'src/middleware/guards/role.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as fs from 'fs-extra';
+
 
 @Controller('api/v1/load')
 export class LoadController {
@@ -11,7 +14,11 @@ export class LoadController {
 
     @Post('data')
     @UseGuards(AuthGuard(), RoleGuard)
-    public async loadData(): Promise<string> {
-        return await this.loadService.loadData();
+    @UseInterceptors(FileInterceptor('file'))
+    public async loadData(@UploadedFile() file): Promise<string> {
+        const filePath = `src/load/data-source/${new Date().toISOString().replace(/[:T.-]/g, '')}-${file.originalname}`;
+        await fs.writeFile(filePath, file.buffer);
+
+        return await this.loadService.loadData(file.buffer);
     }
 }
