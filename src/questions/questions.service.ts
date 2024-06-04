@@ -24,6 +24,7 @@ export class QuestionsService {
                     'question.body',
                     'question.category',
                     'question.is_flagged',
+                    'question.is_deleted',
                     'answer.id',
                     'answer.body',
                     'answer.is_correct',
