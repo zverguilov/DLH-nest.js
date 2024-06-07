@@ -30,7 +30,7 @@ import { ErrorFilter } from './middleware/filters/error.filter';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        type: configService.dbType as any,
+        type: configService.dbType as 'mysql',
         host: configService.dbHost,
         port: configService.dbPort,
         username: configService.dbUsername,
@@ -50,4 +50,4 @@ import { ErrorFilter } from './middleware/filters/error.filter';
     }
   ],
 })
-export class AppModule {}
+export class AppModule { }

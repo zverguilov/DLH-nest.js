@@ -1,8 +1,11 @@
 # Stage 1: Build the NestJS application
-FROM node:18 AS builder
+FROM node:20-alpine AS builder
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /usr/src/app
+
+# Install Python and other build dependencies required for node-gyp
+RUN apk add --no-cache python3 make g++ && ln -sf python3 /usr/bin/python
 
 # Copy package.json and package-lock.json to install dependencies
 COPY package*.json ./
@@ -17,29 +20,19 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Create the final image for running the application
-FROM node:18
+FROM node:20-alpine
 
 # Set the working directory
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Copy only the necessary files from the build stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/node_modules ./node_modules
+COPY --from=builder /usr/src/app/package*.json ./
 
-# Set environment variables if required 
-ENV PORT=3000
-ENV DB_TYPE=postgres
-ENV DB_HOST=localhost
-ENV DB_PORT=5432
-ENV DB_USERNAME=postgres
-ENV DB_PASSWORD=admin
-ENV DB_DATABASE_NAME=postgres
-ENV JWT_SECRET=mysecret
-ENV JWT_EXPIRE=216000
-
-# Expose the application port (change if your NestJS app uses a different port)
+# Expose the port the app runs on
 EXPOSE 3000
 
-# Define the default command to run your NestJS application
-CMD ["node", "dist/main.js"]
+# Define the command to run your app (specify the entry script)
+CMD ["node", "dist/main"]
+
