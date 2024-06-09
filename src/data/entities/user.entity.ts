@@ -21,6 +21,9 @@ export class User {
     @Column({ type: 'varchar', nullable: false, default: 'User' })
     public role: string;
 
+    @Column({ type: 'varchar', nullable: false, default: 'Locked' })
+    public state: string;
+
     @Column({ type: 'tinyint', nullable: false, default: false })
     public is_deleted: boolean;
 

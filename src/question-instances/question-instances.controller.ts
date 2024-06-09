@@ -5,6 +5,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-question-instance.dto';
 import { ReviewQuestionInstanceDTO } from 'src/models/question-instance/review-question-instance.dto';
 import { ReportQuestionInstanceDTO } from 'src/models/question-instance/report-question-instance.dto';
+import { StateGuard } from 'src/middleware/guards/state.guard';
 
 @Controller('api/v1')
 export class QuestionInstancesController {
@@ -13,25 +14,25 @@ export class QuestionInstancesController {
     ) {}
 
     @Get('assessment/review/:assessmentID')
-    @UseGuards(AuthGuard())
+    @UseGuards(AuthGuard(), StateGuard)
     public async getReviewStatus(@Param('assessmentID') assessmentID: string): Promise<ReviewQuestionInstanceDTO[]> {
         return await this.questionInstanceService.getReviewStatus(assessmentID);
     }
 
     @Get('assessment/report/:assessmentID')
-    @UseGuards(AuthGuard())
+    @UseGuards(AuthGuard(), StateGuard)
     public async getReport(@Param('assessmentID') assessmentID: string): Promise<ReportQuestionInstanceDTO[]> {
         return await this.questionInstanceService.getReport(assessmentID);
     }
 
     @Get('assessment/:assessmentID/:questionNumber')
-    @UseGuards(AuthGuard())
+    @UseGuards(AuthGuard(), StateGuard)
     public async getQuestionInstancePackage(@Param('assessmentID') assessmentID: string, @Param('questionNumber') questionNumber: number): Promise<GetQuestionInstanceDTO> {
         return await this.questionInstanceService.getQuestionInstancePackage(assessmentID, questionNumber);
     }
     
     @Put('mark/:instanceID')
-    @UseGuards(AuthGuard())
+    @UseGuards(AuthGuard(), StateGuard)
     public async mark(@Param('instanceID') instanceID: string, @Body() payload: MarkPayloadDTO): Promise<string> {
         return await this.questionInstanceService.mark(instanceID, payload);
     }}

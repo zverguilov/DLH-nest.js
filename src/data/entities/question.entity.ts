@@ -1,8 +1,9 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Exclude } from 'class-transformer';
 import { Answer } from "./answer.entity";
 import { QuestionInstance } from "./question_instance.entity";
 import { Comment } from "./comment.entity";
+import { Category } from "./category.entity";
 
 
 @Entity('question')
@@ -13,8 +14,8 @@ export class Question {
     @Column({ type: 'nvarchar', length: 768, unique: true })
     public body: string;
 
-    @Column({ type: 'nvarchar', nullable: false, length: 16})
-    public category: string
+    // @Column({ type: 'nvarchar', nullable: false, length: 16})
+    // public category: string
 
     @Column({ type: 'tinyint', nullable: false, default: false })
     public is_flagged: boolean;
@@ -30,4 +31,7 @@ export class Question {
 
     @OneToMany(type => Comment, comment => comment.question)
     public comments: Promise<Comment[]>
+
+    @ManyToOne(type => Category, category => category.question)
+    public category: Promise<Category>
 }

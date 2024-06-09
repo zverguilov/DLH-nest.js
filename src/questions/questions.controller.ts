@@ -6,6 +6,7 @@ import { RoleGuard } from 'src/middleware/guards/role.guard';
 import { UpdateQuestionDTO } from 'src/models/question/update-question.dto';
 import { Question } from 'src/data/entities/question.entity';
 import { ReviewFlaggedQuestionDTO } from 'src/models/question/review-flagged-question.dto';
+import { StateGuard } from 'src/middleware/guards/state.guard';
 
 @Controller('api/v1/')
 export class QuestionsController {
@@ -14,19 +15,19 @@ export class QuestionsController {
     ) { }
 
     @Get('question')
-    @UseGuards(AuthGuard(), RoleGuard)
+    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
     public async getAllQuestions(@Query() query: {category}): Promise<ReviewFlaggedQuestionDTO[]> {
         return this.questionsService.getAllQuestions(query.category);
     }
 
     @Get('question/flagged')
-    @UseGuards(AuthGuard(), RoleGuard)
+    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
     public async getFlaggedQuestions(): Promise<ReviewFlaggedQuestionDTO[]> {
         return this.questionsService.getFlaggedQuestions();
     }
 
     @Put('question')
-    @UseGuards(AuthGuard(), RoleGuard)
+    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
     public async updateQuestion(@Body() questionInfo: UpdateQuestionDTO): Promise<string> {
         return this.questionsService.updateQuestion(questionInfo);
     }
