@@ -9,12 +9,14 @@ import { JwtPayload } from './jwt-payload';
 import { UserRegDTO } from 'src/models/user/user-reg.dto';
 import { UserCreatedDTO } from 'src/models/user/user-created.dto';
 import { CustomException } from 'src/middleware/exception/custom-exception';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly usersService: UsersService
   ) { }
 
   public async login(user: UserLoginDTO): Promise<any> {
@@ -62,6 +64,14 @@ export class AuthService {
       newUser.password = await bcrypt.hash(user.password, 10);
       newUser.email = user.email;
       newUser.full_name = user.full_name
+
+      let existingUsers = await this.usersService.getAllUsers();
+
+      if (!existingUsers.length) {
+        newUser.role = 'Admin';
+        newUser.state = 'Active';
+      }
+
       await this.usersRepository.save(newUser);
 
       return {
