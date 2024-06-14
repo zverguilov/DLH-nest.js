@@ -4,12 +4,16 @@ import { Like, Repository } from 'typeorm';
 import { Question } from 'src/data/entities/question.entity';
 import { Answer } from 'src/data/entities/answer.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
+import { CategoryService } from 'src/category/category.service';
+import { QuestionsService } from 'src/questions/questions.service';
 
 @Injectable()
 export class LoadService {
     public constructor(
         @InjectRepository(Question) private readonly questionRepository: Repository<Question>,
-        @InjectRepository(Answer) private readonly answerRepository: Repository<Answer>
+        @InjectRepository(Answer) private readonly answerRepository: Repository<Answer>,
+        public readonly categoryService: CategoryService,
+        public readonly questionService: QuestionsService
     ) { }
 
     public async loadData(fileBuffer: string): Promise<string> {
