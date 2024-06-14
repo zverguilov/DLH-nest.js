@@ -15,6 +15,7 @@ import { AuthService } from './auth/auth/auth.service';
 import { AuthModule } from './auth/auth/auth.module';
 import { APP_FILTER } from '@nestjs/core';
 import { ErrorFilter } from './middleware/filters/error.filter';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { ErrorFilter } from './middleware/filters/error.filter';
         entities: [__dirname + '/**/*.entity{.ts,.js}']
       })
     }),
-    LoadModule],
+    LoadModule,
+    CategoryModule],
   controllers: [AppController],
   providers: [
     AppService,
