@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/data/entities/user.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
+import { UserActiveDTO } from 'src/models/user/user-active.dto';
 import { UserGetDTO } from 'src/models/user/user-get.dto';
 import { UserRoleDTO } from 'src/models/user/user-role.dto';
 import { Repository } from 'typeorm';
@@ -59,6 +60,19 @@ export class UsersService {
 
         } catch (ex) {
             throw new CustomException(`User Service error while setting admin rights: ${ex.message}`, ex.statusCode);
+        }
+    }
+
+    public async setActive(userInfo: UserActiveDTO): Promise<string> {
+        try {
+            let user = await this.retrieveUser(userInfo.id);
+            user.role = userInfo.state ? 'Active' : 'Locked';
+            await this.userRepository.save(user);
+
+            return userInfo.state ? 'User activated.' : 'User deactivated.';
+
+        } catch (ex) {
+            throw new CustomException(`User Service error while activating user: ${ex.message}`, ex.statusCode);
         }
     }
 }
