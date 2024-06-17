@@ -20,7 +20,7 @@ export class UsersController {
     }
 
     @Get('users/:userID')
-    @UseGuards(AuthGuard(), StateGuard)
+    @UseGuards(AuthGuard())
     public async getUserByID(@Param('userID') userID: string): Promise<UserGetDTO> {
         return await this.usersService.getUserByID(userID);
     }

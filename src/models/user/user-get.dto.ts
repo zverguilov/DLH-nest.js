@@ -12,4 +12,7 @@ export class UserGetDTO {
 
     @Expose()
     role: string;
+
+    @Expose()
+    state: string;
 }
