@@ -20,7 +20,8 @@ export class UsersService {
             'user.id',
             'user.full_name',
             'user.email',
-            'user.role'
+            'user.role',
+            'user.state'
         ])
         .getMany()
     }
