@@ -66,7 +66,7 @@ export class UsersService {
     public async setActive(userInfo: UserActiveDTO): Promise<string> {
         try {
             let user = await this.retrieveUser(userInfo.id);
-            user.role = userInfo.state ? 'Active' : 'Locked';
+            user.state = userInfo.state ? 'Active' : 'Locked';
             await this.userRepository.save(user);
 
             return userInfo.state ? 'User activated.' : 'User deactivated.';
