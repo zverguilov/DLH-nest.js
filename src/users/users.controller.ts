@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserGetDTO } from 'src/models/user/user-get.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -42,5 +50,11 @@ export class UsersController {
   @UseGuards(AuthGuard(), RoleGuard, StateGuard)
   public async resetPassword(@Body() user: UserPassResetDTO): Promise<string> {
     return await this.usersService.resetPassword(user);
+  }
+
+  @Delete('users/:userID')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async deleteUser(@Param('userID') userID: string): Promise<string> {
+    return await this.usersService.deleteUser(userID);
   }
 }

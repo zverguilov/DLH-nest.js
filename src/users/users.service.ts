@@ -102,4 +102,19 @@ export class UsersService {
       );
     }
   }
+
+  public async deleteUser(id: string): Promise<string> {
+    try {
+      const user = await this.retrieveUser(id);
+      user.is_deleted = true;
+      await this.userRepository.save(user);
+
+      return 'User deleted successfully.';
+    } catch (ex) {
+      throw new CustomException(
+        `User Service error while deleting user: ${ex.message}`,
+        ex.statusCode,
+      );
+    }
+  }
 }
