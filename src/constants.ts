@@ -1,7 +1,6 @@
 export const ASSESSMENT_QUESTIONS: number = 60;
 export const PASSING_GRADE: number = 80;
 
-
 export const DB_TYPE = 'mysql';
 export const DB_HOST = 'localhost';
 export const DB_PORT = 3307;
