@@ -1,15 +1,18 @@
-import { Expose } from "class-transformer";
+import { Expose } from 'class-transformer';
 
 export class UpdateQuestionDTO {
-    @Expose()
-    id: string;
+  @Expose()
+  id: string;
 
-    @Expose()
-    body: string;
+  @Expose()
+  body: string;
 
-    @Expose()
-    category: string;
+  @Expose()
+  category: string;
 
-    @Expose()
-    is_deleted: boolean;
+  @Expose()
+  is_flagged: boolean;
+
+  @Expose()
+  is_deleted: boolean;
 }
