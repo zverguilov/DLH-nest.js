@@ -1,9 +1,9 @@
 import { Expose } from 'class-transformer';
 
-export class UserActiveDTO {
+export class UserPassResetDTO {
   @Expose()
   id: string;
 
   @Expose()
-  state: string;
+  password: string;
 }

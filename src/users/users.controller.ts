@@ -6,34 +6,41 @@ import { RoleGuard } from 'src/middleware/guards/role.guard';
 import { UserRoleDTO } from 'src/models/user/user-role.dto';
 import { StateGuard } from 'src/middleware/guards/state.guard';
 import { UserActiveDTO } from 'src/models/user/user-active.dto';
+import { UserPassResetDTO } from 'src/models/user/user-pass-reset.dto';
 
 @Controller('api/v1')
 export class UsersController {
-    public constructor(
-        private readonly usersService: UsersService
-    ) { }
+  public constructor(private readonly usersService: UsersService) {}
 
-    @Get('users')
-    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-    public async getAllUsers(): Promise<UserGetDTO[]> {
-        return await this.usersService.getAllUsers();
-    }
+  @Get('users')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async getAllUsers(): Promise<UserGetDTO[]> {
+    return await this.usersService.getAllUsers();
+  }
 
-    @Get('users/:userID')
-    @UseGuards(AuthGuard())
-    public async getUserByID(@Param('userID') userID: string): Promise<UserGetDTO> {
-        return await this.usersService.getUserByID(userID);
-    }
+  @Get('users/:userID')
+  @UseGuards(AuthGuard())
+  public async getUserByID(
+    @Param('userID') userID: string,
+  ): Promise<UserGetDTO> {
+    return await this.usersService.getUserByID(userID);
+  }
 
-    @Put('users/admin')
-    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-    public async setAdminRights(@Body() user: UserRoleDTO): Promise<string> {
-        return await this.usersService.setAdminRights(user);
-    }
+  @Put('users/admin')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async setAdminRights(@Body() user: UserRoleDTO): Promise<string> {
+    return await this.usersService.setAdminRights(user);
+  }
 
-    @Put('users/active')
-    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-    public async setActive(@Body() user: UserActiveDTO): Promise<string> {
-        return await this.usersService.setActive(user);
-    }
+  @Put('users/active')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async setActive(@Body() user: UserActiveDTO): Promise<string> {
+    return await this.usersService.setActive(user);
+  }
+
+  @Put('users/reset-password')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async resetPassword(@Body() user: UserPassResetDTO): Promise<string> {
+    return await this.usersService.resetPassword(user);
+  }
 }
