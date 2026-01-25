@@ -7,12 +7,16 @@ import { QuestionInstancesService } from 'src/question-instances/question-instan
 import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { PASSING_GRADE } from 'src/constants';
+import { Category } from 'src/data/entities/category.entity';
+import { AssignAssessmentDTO } from 'src/models/assessment/assign-assessment.dto';
 
 @Injectable()
 export class AssessmentsService {
   public constructor(
     @InjectRepository(Assessment)
     private readonly assessmentRepository: Repository<Assessment>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
     private readonly questionsService: QuestionsService,
     private readonly questionInstanceService: QuestionInstancesService,
   ) {}
@@ -22,6 +26,14 @@ export class AssessmentsService {
       const assessment: Assessment = await this.assessmentRepository.findOne({
         where: { id: assessmentID },
       });
+
+      const category: Category = await this.categoryRepository
+        .createQueryBuilder('category')
+        .where('category.name = :name', { name: assessment.exam_type })
+        .getOne();
+
+      const passingGrade = category?.passing_grade || PASSING_GRADE;
+
       const questionInstances =
         await this.questionInstanceService.getQIStatus(assessmentID);
 
@@ -44,7 +56,7 @@ export class AssessmentsService {
             ) /
               60) *
               100,
-          ) >= PASSING_GRADE
+          ) >= passingGrade
             ? true
             : false,
       };
@@ -156,6 +168,69 @@ export class AssessmentsService {
     } catch (ex) {
       throw new CustomException(
         `Assessment Service error while creating record: ${ex.message}`,
+        ex.statusCode,
+      );
+    }
+  }
+
+  public async assignAssessment(
+    payload: AssignAssessmentDTO,
+  ): Promise<Assessment> {
+    try {
+      const newAssessment: Assessment = await this.createRandomAssessment({
+        exam_type: payload.exam_type,
+        user: payload.user,
+      });
+
+      await this.assessmentRepository.update(newAssessment.id, {
+        is_assigned: true,
+        attempts: payload.attempts,
+        time_started: null,
+      });
+
+      return await this.assessmentRepository.findOne({
+        where: { id: newAssessment.id },
+      });
+    } catch (ex) {
+      throw new CustomException(
+        `Assessment Service error while assigning assessment: ${ex.message}`,
+        ex.statusCode,
+      );
+    }
+  }
+
+  public async startAssignedAssessment(
+    assessmentID: string,
+  ): Promise<Assessment> {
+    try {
+      const assessment: Assessment = await this.assessmentRepository.findOne({
+        where: { id: assessmentID },
+      });
+
+      if (!assessment.is_assigned) {
+        throw new CustomException(
+          'Only assigned assessments can be started with this method.',
+          400,
+        );
+      }
+
+      if (assessment.time_started) {
+        throw new CustomException(
+          'This assigned assessment has already been started.',
+          400,
+        );
+      }
+
+      await this.assessmentRepository.update(assessmentID, {
+        time_started: new Date(),
+      });
+
+      return await this.assessmentRepository.findOne({
+        where: { id: assessmentID },
+      });
+    } catch (ex) {
+      throw new CustomException(
+        `Assessment Service error while starting assigned assessment: ${ex.message}`,
         ex.statusCode,
       );
     }
