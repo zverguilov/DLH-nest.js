@@ -4,13 +4,18 @@ import { QuestionsService } from './questions.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Question } from 'src/data/entities/question.entity';
 import { PassportModule } from '@nestjs/passport';
+import { Category } from 'src/data/entities/category.entity';
+import { CategoryService } from 'src/category/category.service';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([Question]),
+    TypeOrmModule.forFeature([Question, Category]),
   ],
   controllers: [QuestionsController],
-  providers: [QuestionsService]
+  providers: [
+    QuestionsService,
+    CategoryService
+  ]
 })
 export class QuestionsModule { }

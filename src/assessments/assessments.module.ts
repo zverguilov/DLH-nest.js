@@ -12,8 +12,8 @@ import { Answer } from 'src/data/entities/answer.entity';
 import { PassportModule } from '@nestjs/passport';
 import { User } from 'src/data/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
-import { APP_FILTER } from '@nestjs/core';
-import { ErrorFilter } from 'src/middleware/filters/error.filter';
+import { Category } from 'src/data/entities/category.entity';
+import { CategoryService } from 'src/category/category.service';
 
 @Module({
   imports: [
@@ -22,15 +22,17 @@ import { ErrorFilter } from 'src/middleware/filters/error.filter';
     TypeOrmModule.forFeature([Question]),
     TypeOrmModule.forFeature([QuestionInstance]),
     TypeOrmModule.forFeature([User]),
-    TypeOrmModule.forFeature([Answer])
+    TypeOrmModule.forFeature([Answer]),
+    TypeOrmModule.forFeature([Category]),
   ],
   controllers: [AssessmentsController],
   providers: [
     AssessmentsService,
     QuestionsService,
-    QuestionInstancesService, 
-    AnswersService, 
-    UsersService
-  ]
+    QuestionInstancesService,
+    AnswersService,
+    UsersService,
+    CategoryService,
+  ],
 })
-export class AssessmentsModule { }
+export class AssessmentsModule {}

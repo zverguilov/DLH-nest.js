@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AssessmentsService } from './assessments.service';
@@ -17,7 +18,7 @@ import { RoleGuard } from 'src/middleware/guards/role.guard';
 
 @Controller('api/v1')
 export class AssessmentsController {
-  public constructor(private readonly assessmentService: AssessmentsService) {}
+  public constructor(private readonly assessmentService: AssessmentsService) { }
 
   @Get('assessment/ongoing/:userID')
   @UseGuards(AuthGuard(), StateGuard)
@@ -29,11 +30,20 @@ export class AssessmentsController {
 
   @Get('assessment/list/:userID')
   @UseGuards(AuthGuard(), StateGuard)
-  public async getMyAssessments(
+  public async getUserAssessments(
     @Param('userID') userID: string,
+    @Query('limit') limit?: string,
+    @Query('cursorTime') cursorTime?: string,
+    @Query('cursorId') cursorId?: string,
   ): Promise<Assessment[]> {
-    return await this.assessmentService.getMyAssessments(userID);
+    return await this.assessmentService.getMyAssessments(
+      userID,
+      +limit,
+      cursorTime,
+      cursorId,
+    );
   }
+
 
   @Post('assessment')
   @UseGuards(AuthGuard(), StateGuard)

@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -15,15 +16,21 @@ import { UserRoleDTO } from 'src/models/user/user-role.dto';
 import { StateGuard } from 'src/middleware/guards/state.guard';
 import { UserActiveDTO } from 'src/models/user/user-active.dto';
 import { UserPassResetDTO } from 'src/models/user/user-pass-reset.dto';
+import { number } from 'joi';
 
 @Controller('api/v1')
 export class UsersController {
-  public constructor(private readonly usersService: UsersService) {}
+  public constructor(private readonly usersService: UsersService) { }
 
   @Get('users')
   @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-  public async getAllUsers(): Promise<UserGetDTO[]> {
-    return await this.usersService.getAllUsers();
+  public async getAllUsers(
+    @Query('limit') limit?: string,
+    @Query('cursorName') cursorName?: string,
+    @Query('cursorId') cursorId?: string,
+    @Query('search') search?: string
+  ): Promise<UserGetDTO[]> {
+    return await this.usersService.getAllUsers(+limit, cursorName, cursorId, search);
   }
 
   @Get('users/:userID')

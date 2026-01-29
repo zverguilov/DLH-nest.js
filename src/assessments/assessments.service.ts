@@ -19,7 +19,7 @@ export class AssessmentsService {
     private readonly categoryRepository: Repository<Category>,
     private readonly questionsService: QuestionsService,
     private readonly questionInstanceService: QuestionInstancesService,
-  ) {}
+  ) { }
 
   public async submitAssessment(assessmentID: string): Promise<Assessment> {
     try {
@@ -55,7 +55,7 @@ export class AssessmentsService {
               0,
             ) /
               60) *
-              100,
+            100,
           ) >= passingGrade
             ? true
             : false,
@@ -98,24 +98,38 @@ export class AssessmentsService {
     }
   }
 
-  public async getMyAssessments(userID: string): Promise<Assessment[]> {
-    try {
-      const assessments = await this.assessmentRepository
-        .createQueryBuilder('assessment')
-        .where('assessment.user = :user', { user: userID })
-        .andWhere('assessment.submitted = :submitted', { submitted: true })
-        .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
-        .orderBy('time_started', 'DESC')
-        .getMany();
+  public async getMyAssessments(
+    userID: string,
+    limit?: number,
+    cursorTime?: string,
+    cursorId?: string,
+  ): Promise<Assessment[]> {
+    console.log(`limit: ${limit}, userid: ${userID}, cursortime: ${cursorTime}, cursorid: ${cursorId}`)
 
-      return assessments;
-    } catch (ex) {
-      throw new CustomException(
-        `Assessment Service mass retrieval error: ${ex.message}`,
-        ex.statusCode,
+    const qb = this.assessmentRepository
+      .createQueryBuilder('assessment')
+      .where('assessment.user = :user', { user: userID })
+      .andWhere('assessment.submitted = true')
+      .andWhere('assessment.is_deleted = false')
+      .orderBy('assessment.time_started', 'DESC')
+      .addOrderBy('assessment.id', 'DESC');
+
+    if (cursorTime && cursorId) {
+      qb.andWhere(
+        `(assessment.time_started < :cursorTime OR
+      (assessment.time_started = :cursorTime AND assessment.id < :cursorId))`,
+        { cursorTime, cursorId }
       );
     }
+
+
+    if (limit) {
+      qb.take(limit);
+    }
+
+    return await qb.getMany();
   }
+
 
   public async createRandomAssessment(
     payload: CreateAssessmentDTO,

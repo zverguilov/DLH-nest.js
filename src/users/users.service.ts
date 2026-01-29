@@ -12,21 +12,65 @@ import { Repository } from 'typeorm';
 export class UsersService {
   public constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
-  public async getAllUsers(): Promise<UserGetDTO[]> {
-    return await this.userRepository
-      .createQueryBuilder('user')
-      .where('is_deleted = false')
-      .select([
-        'user.id',
-        'user.full_name',
-        'user.email',
-        'user.role',
-        'user.state',
-      ])
-      .getMany();
+  // public async getAllUsers(): Promise<UserGetDTO[]> {
+  //   return await this.userRepository
+  //     .createQueryBuilder('user')
+  //     .where('is_deleted = false')
+  //     .select([
+  //       'user.id',
+  //       'user.full_name',
+  //       'user.email',
+  //       'user.role',
+  //       'user.state',
+  //     ])
+  //     .getMany();
+  // }
+
+  public async getAllUsers(
+  limit?: number,
+  cursorName?: string,
+  cursorId?: string,
+  search?: string
+): Promise<UserGetDTO[]> {
+  console.log(`limit: ${limit}, name: ${cursorName}, id: ${cursorId}, search: ${search}`)
+  const qb = this.userRepository
+    .createQueryBuilder('user')
+    .where('user.is_deleted = false')
+    .select([
+      'user.id',
+      'user.full_name',
+      'user.email',
+      'user.role',
+      'user.state',
+    ])
+    .orderBy('user.full_name', 'ASC')
+    .addOrderBy('user.id', 'ASC'); // вторичен ключ
+
+  // Composite cursor
+  if (cursorName && cursorId) {
+    qb.andWhere(
+      '(user.full_name > :cursorName OR (user.full_name = :cursorName AND user.id > :cursorId))',
+      { cursorName, cursorId }
+    );
   }
+
+  if (search) {
+    qb.andWhere(
+      '(LOWER(user.full_name) LIKE :search OR LOWER(user.email) LIKE :search)',
+      { search: `%${search.toLowerCase()}%` }
+    );
+  }
+
+  if (limit) {
+    qb.take(limit);
+  }
+
+  return await qb.getMany();
+}
+
+
 
   public async retrieveUser(id: string): Promise<User> {
     try {

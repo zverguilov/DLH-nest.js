@@ -9,7 +9,7 @@ export class ConfigService {
   }
 
   get port(): number {
-    return 3000;
+    return 3001;
   }
 
   get dbHost(): string {
@@ -17,7 +17,7 @@ export class ConfigService {
   }
 
   get dbPort(): number {
-    return 3307;
+    return 3308;
   }
 
   get dbUsername(): string {
