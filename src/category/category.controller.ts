@@ -25,4 +25,11 @@ export class CategoryController {
   ): Promise<Category> {
     return this.categoryService.createCategory(payload);
   }
+
+
+  @Get('category')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async getAllCategories(): Promise<Category[]> {
+    return this.categoryService.getAllCategories();
+  }
 }

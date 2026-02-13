@@ -11,5 +11,5 @@ export class UpdateAnswerDTO {
     is_correct: boolean;
 
     @Expose()
-    is_deleted: boolean;
+    is_deleted?: boolean;
 }

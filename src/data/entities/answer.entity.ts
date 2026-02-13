@@ -12,7 +12,7 @@ export class Answer {
     @Column({ type: 'tinyint', nullable: false, default: false })
     public is_deleted: boolean;
 
-    @ManyToOne(type => Question, question => question.answers)
+    @ManyToOne(type => Question, question => question.answers, { onDelete: 'CASCADE' })
     public question: Question
 
     @Column({ type: 'tinyint', default: false })

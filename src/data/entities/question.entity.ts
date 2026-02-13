@@ -1,9 +1,10 @@
-import { Column, Entity, OneToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, OneToMany, ManyToOne, PrimaryGeneratedColumn, Index, OneToOne } from "typeorm";
 import { Exclude } from 'class-transformer';
 import { Answer } from "./answer.entity";
 import { QuestionInstance } from "./question_instance.entity";
 import { Comment } from "./comment.entity";
 import { Category } from "./category.entity";
+import { QuestionStat } from "./question_stat.entity";
 
 
 @Entity('question')
@@ -11,6 +12,7 @@ export class Question {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
+    @Index()
     @Column({ type: 'nvarchar', length: 768 })
     public body: string;
 
@@ -31,6 +33,9 @@ export class Question {
 
     @OneToMany(type => Comment, comment => comment.question)
     public comments: Promise<Comment[]>
+
+    @OneToOne(type => QuestionStat, questionStat => questionStat.question)
+    public stat: Promise<QuestionStat>
 
     // @ManyToOne(type => Category, category => category.question)
     // public category: Promise<Category>

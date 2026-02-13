@@ -6,6 +6,7 @@ import { Answer } from 'src/data/entities/answer.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { CategoryService } from 'src/category/category.service';
 import { QuestionsService } from 'src/questions/questions.service';
+import { EXAM_LENGTH, ASSESSMENT_QUESTIONS, PASSING_GRADE } from '../constants';
 
 @Injectable()
 export class LoadService {
@@ -22,26 +23,22 @@ export class LoadService {
             const sheets = Object.keys(sheetData);
 
             for (let sheet of sheets) {
+                const categoryRecord = await this.categoryService.getCategoryByName(sheet);
+                if (!categoryRecord) await this.categoryService.createCategory({
+                    name: sheet,
+                    exam_length: EXAM_LENGTH,
+                    passing_grade: PASSING_GRADE,
+                    number_of_questions: ASSESSMENT_QUESTIONS
+                })
+            }
+
+            for (let sheet of sheets) {
                 for (let e of sheetData[sheet]) {
                     console.log(`${e[1]}: ${e[2]}`)
 
                     let newQuestion = await this.questionRepository.create();
                     newQuestion.body = e[2];
                     newQuestion.category = e[5];
-
-                    // let category = await this.categoryService.getCategoryByName(e[5]);
-                    // if (!category) category = await this.categoryService.createCategory(e[5]);
-
-                    // let newQuestion = await this.questionRepository.createQueryBuilder()
-                    // .insert()
-                    // .into('question')
-                    // .values({
-                    //     body: e[2],
-                    //     category: category.id
-                    // })
-                    // .execute()
-
-                    // let createdQuestion = await this.questionService.getQuestionByID(newQuestion.identifiers[0].id)
 
                     try {
                         let createdQuestion = await this.questionRepository.save(newQuestion);

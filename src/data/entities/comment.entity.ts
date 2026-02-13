@@ -17,6 +17,6 @@ export class Comment {
     @ManyToOne(type => User, user => user.comments)
     public user: Promise<User>;
     
-    @ManyToOne(type  => Question, question => question.comments)
+    @ManyToOne(type  => Question, question => question.comments, { onDelete: 'CASCADE' })
     public question: Promise<Question>;
 }

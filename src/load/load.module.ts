@@ -8,16 +8,15 @@ import { PassportModule } from '@nestjs/passport';
 import { CategoryService } from 'src/category/category.service';
 import { Category } from 'src/data/entities/category.entity';
 import { QuestionsService } from 'src/questions/questions.service';
+import { QuestionInstance } from 'src/data/entities/question_instance.entity';
+import { Comment } from 'src/data/entities/comment.entity';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([Question]),
-    TypeOrmModule.forFeature([Answer]),
-    TypeOrmModule.forFeature([Category]),
-    TypeOrmModule.forFeature([Question])
+    TypeOrmModule.forFeature([Question, Answer, Category, QuestionInstance, Comment]),
 ],
   controllers: [LoadController],
-  providers: [LoadService, CategoryService, QuestionsService]
+  providers: [LoadService, CategoryService, QuestionsService, QuestionInstance]
 })
 export class LoadModule {}

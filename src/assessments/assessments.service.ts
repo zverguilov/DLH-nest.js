@@ -104,7 +104,6 @@ export class AssessmentsService {
     cursorTime?: string,
     cursorId?: string,
   ): Promise<Assessment[]> {
-    console.log(`limit: ${limit}, userid: ${userID}, cursortime: ${cursorTime}, cursorid: ${cursorId}`)
 
     const qb = this.assessmentRepository
       .createQueryBuilder('assessment')

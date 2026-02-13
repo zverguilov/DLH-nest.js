@@ -5,11 +5,11 @@ export class CategoryCreatedDTO {
   name: string;
 
   @Expose()
-  exam_length: number;
+  exam_length?: number;
 
   @Expose()
-  number_of_questions: number;
+  number_of_questions?: number;
 
   @Expose()
-  passing_grade: number;
+  passing_grade?: number;
 }

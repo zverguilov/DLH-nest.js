@@ -1,8 +1,11 @@
-import { Column, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Question } from "./question.entity";
 import { Assessment } from "./assessment.entity";
 
 @Entity('question_instance')
+@Index(['question'])
+@Index(['assessment'])
+@Index(['question', 'is_correct'])
 export class QuestionInstance {
     @PrimaryGeneratedColumn('uuid')
     public id: string;
@@ -22,7 +25,7 @@ export class QuestionInstance {
     @Column({ type: 'tinyint', nullable: false, default: false })
     public to_review: boolean;
 
-    @ManyToOne(type => Question, question => question.instances)
+    @ManyToOne(type => Question, question => question.instances, { onDelete: 'CASCADE' })
     public question: Promise<Question>
 
     @ManyToOne(type => Assessment, assessment => assessment.question_instances)

@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { IsEmail } from 'class-validator';
 import { Comment } from './comment.entity';
 import { Assessment } from './assessment.entity';
@@ -8,6 +8,7 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
+  @Index()
   @Column({ type: 'nvarchar', nullable: false, length: 128 })
   public full_name!: string;
 

@@ -5,7 +5,7 @@ export class Category {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'nvarchar', length: 64 })
+  @Column({ type: 'nvarchar', length: 64, unique: true })
   public name: string;
 
   @Column({ type: 'integer', nullable: false, default: 90 })

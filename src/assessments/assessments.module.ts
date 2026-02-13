@@ -14,16 +14,12 @@ import { User } from 'src/data/entities/user.entity';
 import { UsersService } from 'src/users/users.service';
 import { Category } from 'src/data/entities/category.entity';
 import { CategoryService } from 'src/category/category.service';
+import { Comment } from 'src/data/entities/comment.entity';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([Assessment]),
-    TypeOrmModule.forFeature([Question]),
-    TypeOrmModule.forFeature([QuestionInstance]),
-    TypeOrmModule.forFeature([User]),
-    TypeOrmModule.forFeature([Answer]),
-    TypeOrmModule.forFeature([Category]),
+    TypeOrmModule.forFeature([Assessment, Question, QuestionInstance, User, Answer, Category, Comment])
   ],
   controllers: [AssessmentsController],
   providers: [

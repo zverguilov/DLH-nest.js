@@ -7,6 +7,7 @@ import { UserGetDTO } from 'src/models/user/user-get.dto';
 import { UserPassResetDTO } from 'src/models/user/user-pass-reset.dto';
 import { UserRoleDTO } from 'src/models/user/user-role.dto';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -14,61 +15,46 @@ export class UsersService {
     @InjectRepository(User) private readonly userRepository: Repository<User>,
   ) { }
 
-  // public async getAllUsers(): Promise<UserGetDTO[]> {
-  //   return await this.userRepository
-  //     .createQueryBuilder('user')
-  //     .where('is_deleted = false')
-  //     .select([
-  //       'user.id',
-  //       'user.full_name',
-  //       'user.email',
-  //       'user.role',
-  //       'user.state',
-  //     ])
-  //     .getMany();
-  // }
-
   public async getAllUsers(
-  limit?: number,
-  cursorName?: string,
-  cursorId?: string,
-  search?: string
-): Promise<UserGetDTO[]> {
-  console.log(`limit: ${limit}, name: ${cursorName}, id: ${cursorId}, search: ${search}`)
-  const qb = this.userRepository
-    .createQueryBuilder('user')
-    .where('user.is_deleted = false')
-    .select([
-      'user.id',
-      'user.full_name',
-      'user.email',
-      'user.role',
-      'user.state',
-    ])
-    .orderBy('user.full_name', 'ASC')
-    .addOrderBy('user.id', 'ASC'); // вторичен ключ
+    limit?: number,
+    cursorName?: string,
+    cursorId?: string,
+    search?: string
+  ): Promise<UserGetDTO[]> {
+    const qb = this.userRepository
+      .createQueryBuilder('user')
+      .where('user.is_deleted = false')
+      .select([
+        'user.id',
+        'user.full_name',
+        'user.email',
+        'user.role',
+        'user.state',
+      ])
+      .orderBy('user.full_name', 'ASC')
+      .addOrderBy('user.id', 'ASC'); // вторичен ключ
 
-  // Composite cursor
-  if (cursorName && cursorId) {
-    qb.andWhere(
-      '(user.full_name > :cursorName OR (user.full_name = :cursorName AND user.id > :cursorId))',
-      { cursorName, cursorId }
-    );
+    // Composite cursor
+    if (cursorName && cursorId) {
+      qb.andWhere(
+        '(user.full_name > :cursorName OR (user.full_name = :cursorName AND user.id > :cursorId))',
+        { cursorName, cursorId }
+      );
+    }
+
+    if (search) {
+      qb.andWhere(
+        '(LOWER(user.full_name) LIKE :search OR LOWER(user.email) LIKE :search)',
+        { search: `%${search.toLowerCase()}%` }
+      );
+    }
+
+    if (limit) {
+      qb.take(limit);
+    }
+
+    return await qb.getMany();
   }
-
-  if (search) {
-    qb.andWhere(
-      '(LOWER(user.full_name) LIKE :search OR LOWER(user.email) LIKE :search)',
-      { search: `%${search.toLowerCase()}%` }
-    );
-  }
-
-  if (limit) {
-    qb.take(limit);
-  }
-
-  return await qb.getMany();
-}
 
 
 
@@ -135,7 +121,7 @@ export class UsersService {
   public async resetPassword(userInfo: UserPassResetDTO): Promise<string> {
     try {
       const user = await this.retrieveUser(userInfo.id);
-      user.password = userInfo.password;
+      user.password = await bcrypt.hash(userInfo.password, 10);
       await this.userRepository.save(user);
 
       return 'Password reset successfully.';
@@ -150,8 +136,11 @@ export class UsersService {
   public async deleteUser(id: string): Promise<string> {
     try {
       const user = await this.retrieveUser(id);
-      user.is_deleted = true;
-      await this.userRepository.save(user);
+      if (!user) {
+        throw new CustomException(`User with id ${id} not found`, 404);
+      }
+
+      await this.userRepository.delete(id);
 
       return 'User deleted successfully.';
     } catch (ex) {
@@ -161,4 +150,5 @@ export class UsersService {
       );
     }
   }
+
 }
