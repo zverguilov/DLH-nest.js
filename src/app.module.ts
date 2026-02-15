@@ -37,7 +37,7 @@ import { CategoryModule } from './category/category.module';
         username: configService.dbUsername,
         password: configService.dbPassword,
         database: configService.dbName,
-        synchronize: true,
+        synchronize: false,
         entities: [__dirname + '/**/*.entity{.ts,.js}']
       })
     }),

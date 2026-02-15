@@ -317,4 +317,16 @@ export class QuestionsService {
       );
     }
   }
+
+  public async getTotalQuestions(category: string): Promise<number> {
+    try {
+      return await this.questionRepository.countBy({category});
+
+    } catch (ex) {
+      throw new CustomException(
+        `Question Service category questions total number error: ${ex.message}`,
+        ex.message,
+      );
+    }
+  }
 }

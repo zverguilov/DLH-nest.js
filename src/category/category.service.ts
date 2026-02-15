@@ -5,12 +5,15 @@ import { Category } from 'src/data/entities/category.entity';
 import { CategoryCreatedDTO } from 'src/models/category/category-created.dto';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { ASSESSMENT_QUESTIONS, EXAM_LENGTH, PASSING_GRADE } from 'src/constants';
+import { QuestionsService } from 'src/questions/questions.service';
+import { GetCategoryDTO } from 'src/models/category/get-category.dto';
 
 @Injectable()
 export class CategoryService {
   public constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    private readonly questionsService: QuestionsService
   ) { }
 
   public async createCategory(payload: CategoryCreatedDTO): Promise<Category> {
@@ -63,7 +66,7 @@ export class CategoryService {
     cursorName?: string,
     cursorId?: string,
     search?: string
-  ): Promise<Category[]> {
+  ): Promise<GetCategoryDTO[]> {
     try {
       const qb = this.categoryRepository
         .createQueryBuilder('category')
@@ -97,11 +100,40 @@ export class CategoryService {
         qb.take(limit);
       }
 
-      return await qb.getMany();
+      return await Promise.all(
+        (await qb.getMany()).map(async ctgr => {
+          return {
+            ...ctgr,
+            total_questions: await this.questionsService.getTotalQuestions(ctgr.name)
+          };
+        })
+      );
 
     } catch (ex) {
       throw new CustomException(
         `Category Service error while retrieving category: ${ex.message}`,
+        ex.statusCode,
+      );
+    }
+  }
+
+  public async updateCategory(categoryInfo: Category): Promise<string> {
+    try {
+      const category: Category = await this.categoryRepository.findOneOrFail({where: { id: categoryInfo.id }});
+      await this.categoryRepository.update(
+        { id: categoryInfo.id },
+        {
+          name: categoryInfo.name || category.name,
+          number_of_questions: categoryInfo.number_of_questions || category.number_of_questions,
+          passing_grade: categoryInfo.passing_grade || category.passing_grade,
+          exam_length: categoryInfo.exam_length || category.exam_length
+        }
+      );
+
+      return `Category ${category.name} saved successfully.`
+    } catch (ex) {
+      throw new CustomException(
+        `Category Service error while updating category: ${ex.message}`,
         ex.statusCode,
       );
     }

@@ -16,7 +16,8 @@ export class Question {
     @Column({ type: 'nvarchar', length: 768 })
     public body: string;
 
-    @Column({ type: 'nvarchar', nullable: false, length: 16})
+    @Index()
+    @Column({ type: 'nvarchar', nullable: false, length: 64})
     public category: string
 
     @Column({ type: 'tinyint', nullable: false, default: false })
