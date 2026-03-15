@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppService } from './app.service';
 import { QuestionsModule } from './questions/questions.module';
 import { QuestionInstancesModule } from './question-instances/question-instances.module';
@@ -42,7 +43,9 @@ import { CategoryModule } from './category/category.module';
       })
     }),
     LoadModule,
-    CategoryModule],
+    CategoryModule,
+    ScheduleModule.forRoot()
+  ],
   controllers: [AppController],
   providers: [
     AppService,

@@ -14,7 +14,7 @@ import { QuestionPreviewDTO } from 'src/models/question/question-preview.dto';
 
 @Controller('api/v1/')
 export class QuestionsController {
-    public constructor (
+    public constructor(
         private readonly questionsService: QuestionsService
     ) { }
 
@@ -22,20 +22,8 @@ export class QuestionsController {
     @UseGuards(AuthGuard(), RoleGuard, StateGuard)
     public async getAllQuestions(@Query() query: GetAllQuestionsQueryDto): Promise<ReviewFlaggedQuestionDTO[]> {
         const { category, limit, cursorId, search } = query;
-        
+
         return this.questionsService.getAllQuestions(category, limit, cursorId, search);
-    }
-
-    @Get('question/:questionID')
-    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-    public async getQuestion(@Param('questionID') questionID: string): Promise<Question> {
-        return this.questionsService.getQuestionByID(questionID);
-    }
-
-    @Get('question/preview/:questionID')
-    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-    public async getQuestionPreview(@Param('questionID') questionID: string): Promise<QuestionPreviewDTO> {
-        return await this.questionsService.getQuestionPreview(questionID)
     }
 
     @Get('question/category_error_percentage')
@@ -60,6 +48,18 @@ export class QuestionsController {
     @UseGuards(AuthGuard(), RoleGuard, StateGuard)
     public async updateQuestion(@Body() questionInfo: UpdateQuestionDTO): Promise<string> {
         return this.questionsService.updateQuestion(questionInfo);
+    }
+
+    @Get('question/preview/:questionID')
+    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+    public async getQuestionPreview(@Param('questionID') questionID: string): Promise<QuestionPreviewDTO> {
+        return await this.questionsService.getQuestionPreview(questionID)
+    }
+
+    @Get('question/:questionID')
+    @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+    public async getQuestion(@Param('questionID') questionID: string): Promise<Question> {
+        return this.questionsService.getQuestionByID(questionID);
     }
 
     @Delete('question/:questionID')

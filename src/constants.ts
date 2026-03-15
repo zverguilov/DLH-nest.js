@@ -3,7 +3,7 @@ export const PASSING_GRADE: number = 80;
 export const EXAM_LENGTH: number = 90;
 
 export const DB_TYPE = 'mysql';
-export const DB_HOST = 'localhost';
+export const DB_HOST = 'dlh-mysql-dev';
 export const DB_PORT = 3307;
 export const DB_USERNAME = 'admin';
 export const DB_PASSWORD = 'admin';

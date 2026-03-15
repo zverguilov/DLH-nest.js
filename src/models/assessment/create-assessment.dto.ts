@@ -6,4 +6,7 @@ export class CreateAssessmentDTO {
 
   @Expose()
   public user: string;
+
+  @Expose()
+  public is_assigned?: boolean;
 }

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseBoolPipe,
   Put,
   Query,
   UseGuards,
@@ -17,6 +18,7 @@ import { StateGuard } from 'src/middleware/guards/state.guard';
 import { UserActiveDTO } from 'src/models/user/user-active.dto';
 import { UserPassResetDTO } from 'src/models/user/user-pass-reset.dto';
 import { number } from 'joi';
+import { TopAchieverDTO } from 'src/models/user/top-achiever.dto';
 
 @Controller('api/v1')
 export class UsersController {
@@ -33,12 +35,10 @@ export class UsersController {
     return await this.usersService.getAllUsers(+limit, cursorName, cursorId, search);
   }
 
-  @Get('users/:userID')
-  @UseGuards(AuthGuard())
-  public async getUserByID(
-    @Param('userID') userID: string,
-  ): Promise<UserGetDTO> {
-    return await this.usersService.getUserByID(userID);
+  @Get('users/number')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async getNumberOfUsers(): Promise<number> {
+    return await this.usersService.getNumberOfUsers()
   }
 
   @Put('users/admin')
@@ -57,6 +57,22 @@ export class UsersController {
   @UseGuards(AuthGuard(), RoleGuard, StateGuard)
   public async resetPassword(@Body() user: UserPassResetDTO): Promise<string> {
     return await this.usersService.resetPassword(user);
+  }
+
+  @Get('users/top/:assigned')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async getTopPerformers(
+    @Param('assigned', ParseBoolPipe) assigned: boolean,
+  ): Promise<TopAchieverDTO[]> {
+    return await this.usersService.getTopAchievers(assigned);
+  }
+
+  @Get('users/:userID')
+  @UseGuards(AuthGuard())
+  public async getUserByID(
+    @Param('userID') userID: string,
+  ): Promise<UserGetDTO> {
+    return await this.usersService.getUserByID(userID);
   }
 
   @Delete('users/:userID')

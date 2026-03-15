@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assessment } from 'src/data/entities/assessment.entity';
 import { QuestionsService } from 'src/questions/questions.service';
-import { Repository } from 'typeorm';
+import { DataSource, Repository, LessThanOrEqual } from 'typeorm';
 import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
 import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
 import { CustomException } from 'src/middleware/exception/custom-exception';
@@ -13,6 +14,7 @@ import { AssignAssessmentDTO } from 'src/models/assessment/assign-assessment.dto
 @Injectable()
 export class AssessmentsService {
   public constructor(
+    private readonly dataSource: DataSource,
     @InjectRepository(Assessment)
     private readonly assessmentRepository: Repository<Assessment>,
     @InjectRepository(Category)
@@ -20,6 +22,25 @@ export class AssessmentsService {
     private readonly questionsService: QuestionsService,
     private readonly questionInstanceService: QuestionInstancesService,
   ) { }
+
+  @Cron('*/30 * * * * *')
+  async checkDeadlines() {
+    const now = new Date();
+
+    await this.assessmentRepository.update(
+      {
+        deadline: LessThanOrEqual(now),
+        submitted: false,
+        is_assigned: true,
+      },
+      {
+        status: 'Submitted',
+        submitted: true,
+        pass: false,
+        time_ended: now,
+      },
+    );
+  }
 
   public async submitAssessment(assessmentID: string): Promise<Assessment> {
     try {
@@ -134,18 +155,19 @@ export class AssessmentsService {
     payload: CreateAssessmentDTO,
   ): Promise<Assessment> {
     try {
-      const ongoingAssessment = await this.assessmentRepository
-        .createQueryBuilder('assessment')
-        .where('assessment.user = :user', { user: payload.user })
-        .andWhere('assessment.submitted = :submitted', { submitted: false })
-        .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
-        .getOne();
+      if (!payload.is_assigned) {
+        const ongoingAssessment = await this.assessmentRepository
+          .createQueryBuilder('assessment')
+          .where('assessment.user = :user', { user: payload.user })
+          .andWhere('assessment.submitted = :submitted', { submitted: false })
+          .getOne();
 
-      if (ongoingAssessment)
-        throw new CustomException(
-          'You can only have one active assessment.',
-          400,
-        );
+        if (ongoingAssessment)
+          throw new CustomException(
+            'You can only have one active training assessment.',
+            400,
+          );
+      }
 
       const newAssessment = await this.assessmentRepository
         .createQueryBuilder()
@@ -161,6 +183,7 @@ export class AssessmentsService {
       const randomQuestionsBatch = await this.questionsService.getRandomBatch(
         payload.exam_type,
       );
+
       await this.questionInstanceService.createQuestionInstances(
         randomQuestionsBatch,
         newAssessment.identifiers[0].id,
@@ -188,29 +211,66 @@ export class AssessmentsService {
 
   public async assignAssessment(
     payload: AssignAssessmentDTO,
-  ): Promise<Assessment> {
+  ): Promise<Assessment[]> {
     try {
-      const newAssessment: Assessment = await this.createRandomAssessment({
-        exam_type: payload.exam_type,
-        user: payload.user,
-      });
+      return await this.dataSource.transaction(async (manager) => {
+        const createdAssessments: Assessment[] = [];
 
-      await this.assessmentRepository.update(newAssessment.id, {
-        is_assigned: true,
-        attempts: payload.attempts,
-        time_started: null,
-      });
+        for (const userId of payload.users) {
+          let newAssessment: Assessment;
 
-      return await this.assessmentRepository.findOne({
-        where: { id: newAssessment.id },
+          try {
+            newAssessment = await this.createRandomAssessment({
+              exam_type: payload.exam_type,
+              user: userId,
+              is_assigned: true
+            });
+          } catch (ex) {
+            throw new CustomException(
+              `Failed to create assessment for user ${userId}: ${ex.message}`,
+              ex.statusCode,
+            );
+          }
+
+          try {
+            await manager.update(Assessment, newAssessment.id, {
+              is_assigned: true,
+              attempts: payload.attempts,
+              time_started: null,
+              deadline: payload.deadline
+            });
+
+
+            const assigned = await manager.findOne(Assessment, {
+              where: { id: newAssessment.id },
+            });
+
+            if (!assigned) {
+              throw new CustomException(
+                `Could not fetch assigned assessment for user ${userId}`,
+                500
+              );
+            }
+
+            createdAssessments.push(assigned);
+          } catch (ex) {
+            throw new CustomException(
+              `Error while assigning assessment for user ${userId}: ${ex.message}`,
+              ex.statusCode,
+            );
+          }
+        }
+
+        return createdAssessments;
       });
-    } catch (ex) {
+    } catch (ex: any) {
       throw new CustomException(
-        `Assessment Service error while assigning assessment: ${ex.message}`,
-        ex.statusCode,
+        `Assessment Service error during batch assignment: ${ex.message}`,
+        ex.statusCode || 500,
       );
     }
   }
+
 
   public async startAssignedAssessment(
     assessmentID: string,
@@ -247,5 +307,14 @@ export class AssessmentsService {
         ex.statusCode,
       );
     }
+  }
+
+  public async getAssignedAssessments(): Promise<Assessment[]> {
+    return this.assessmentRepository.find({
+      where: {
+        is_assigned: true,
+        submitted: false
+      }
+    });
   }
 }

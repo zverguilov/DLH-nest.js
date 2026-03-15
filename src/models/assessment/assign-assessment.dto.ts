@@ -5,8 +5,11 @@ export class AssignAssessmentDTO {
   public exam_type: string;
 
   @Expose()
-  public user: string;
+  public users: string[];
 
   @Expose()
   public attempts: number;
+
+  @Expose()
+  public deadline: Date;
 }

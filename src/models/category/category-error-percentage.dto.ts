@@ -6,4 +6,7 @@ export class CategoryErrorPercentageDTO {
 
   @Expose()
   error_percentage: number;
+
+  @Expose()
+  total_instances: number;
 }

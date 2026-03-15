@@ -14,13 +14,13 @@ export class Assessment {
   @PrimaryGeneratedColumn('uuid')
   public id: string;
 
-  @Column({ type: 'nvarchar', nullable: false, length: 16 })
+  @Column({ type: 'nvarchar', nullable: false, length: 64 })
   public exam_type: string;
 
   @Column({ type: 'integer', nullable: true })
   public grade: number;
 
-  @Column({ type: 'datetime' })
+  @Column({ type: 'datetime', nullable: true })
   public time_started: Date;
 
   @Column({ type: 'datetime', nullable: true })
@@ -43,6 +43,9 @@ export class Assessment {
 
   @Column({ type: 'integer', nullable: true, default: 0 })
   public attempts: number;
+
+  @Column({ type: 'datetime', nullable: true })
+  public deadline: Date;
 
   @OneToMany(
     () => QuestionInstance,

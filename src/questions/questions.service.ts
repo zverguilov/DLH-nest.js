@@ -33,26 +33,29 @@ export class QuestionsService {
 
   public async getErrorPercentageBycategory(): Promise<CategoryErrorPercentageDTO[]> {
     try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
       const categories = await this.questionRepository
         .createQueryBuilder('question')
         .leftJoin('question.instances', 'instance')
+        .leftJoin('instance.assessment', 'assessment')
+        .where('assessment.time_started IS NOT NULL')
+        .andWhere('assessment.time_started >= :thirtyDaysAgo', { thirtyDaysAgo })
         .select([
-          'question.category'
+          'question.category',
+          'COUNT(instance.id) as total_instances',
+          'COUNT(CASE WHEN instance.is_correct = false THEN 1 END) * 1.0 / COUNT(instance.id) as error_percentage'
         ])
         .groupBy('question.category')
-        // .addSelect('COUNT(CASE WHEN instance.is_correct = false THEN 1 END)', 'wrong_count')
-        // .addSelect('COUNT(instance.id)', 'total_count')
-        .addSelect('COUNT(CASE WHEN instance.is_correct = false THEN 1 END) * 1.0 / COUNT(instance.id)', 'error_percentage')
-        .orderBy('COUNT(CASE WHEN instance.is_correct = false THEN 1 END)/COUNT(instance.id)', 'DESC')
-        .limit(3)
-        .getRawMany()
+        .orderBy('error_percentage', 'DESC')
+        .getRawMany();
 
-      console.log(categories)
-      return categories
-        .map(category => ({
-          name: category.question_category,
-          error_percentage: category.error_percentage * 100
-        }))
+      return categories.map(category => ({
+        name: category.question_category,
+        error_percentage: Number(category.error_percentage) * 100,
+        total_instances: Number(category.total_instances),
+      }));
 
     } catch (ex) {
       throw new CustomException(
@@ -62,32 +65,69 @@ export class QuestionsService {
     }
   }
 
+
   public async getMostFrequentlyWrongQuestions(): Promise<MostWrongQuestionDTO[]> {
     try {
-      const qi = await this.questionInstanceRepository
-        .createQueryBuilder('question_instance')
-        .where('question_instance.is_correct = false')
-        .leftJoin('question_instance.question', 'q')
+      const rawResults = await this.questionInstanceRepository
+        .createQueryBuilder('qi')
+        .leftJoin('qi.question', 'q')
+
         .select([
-          'q.id',
-          'q.body',
-          'q.category'
+          'q.id AS id',
+          'q.body AS body',
+          'q.category AS category',
         ])
+
+        .addSelect(`
+        SUM(CASE WHEN qi.is_correct = false THEN 1 ELSE 0 END)
+      `, 'wrongCount')
+
+        .addSelect(`
+        COUNT(qi.id)
+      `, 'totalCount')
+
+        .addSelect(`
+        (
+          (
+            SUM(CASE WHEN qi.is_correct = false THEN 1 ELSE 0 END)
+            +
+            25 * (
+              SELECT
+                SUM(CASE WHEN qi2.is_correct = false THEN 1 ELSE 0 END) * 1.0
+                / COUNT(*)
+              FROM question_instance qi2
+            )
+          )
+          /
+          (COUNT(qi.id) + 25)
+        )
+      `, 'bayesianError')
+
         .groupBy('q.id')
         .addGroupBy('q.body')
         .addGroupBy('q.category')
-        .addSelect('COUNT(question_instance.id)', 'wrongCount')
-        .orderBy('wrongCount', 'DESC')
-        .limit(10)
 
-      const rawResults = await qi.getRawMany()
+        .orderBy('bayesianError', 'DESC')
 
-      return rawResults.map(r => ({
-        id: r.q_id,
-        body: r.q_body,
-        category: r.q_category,
-        wrongCount: +r.wrongCount,
-      }));
+        .limit(20)
+
+        .getRawMany();
+
+      return rawResults.map(r => {
+        const wrong = Number(r.wrongCount);
+        const total = Number(r.totalCount);
+
+        return {
+          id: r.id,
+          body: r.body,
+          category: r.category,
+          wrongCount: wrong,
+          totalCount: total,
+          errorRate: total ? (wrong / total) : 0,
+          bayesianError: +r.bayesianError
+        };
+      });
+
     } catch (ex) {
       throw new CustomException(
         `Question Service error while retrieving most wrong questions: ${ex.message}`,
@@ -180,7 +220,7 @@ export class QuestionsService {
       const randomQuestions: Question[] = await this.questionRepository
         .createQueryBuilder('question')
         .leftJoinAndSelect('question.answers', 'answer')
-        .where('question.category = :category', { category: category })
+        .where('question.category = :categoryID', { categoryID: category.id })
         .andWhere('question.is_deleted = :is_deleted', { is_deleted: false })
         .select(['question.id', 'question.body', 'answer.id', 'answer.body'])
         .orderBy('RAND()')
@@ -307,7 +347,7 @@ export class QuestionsService {
 
   public async deleteQuestion(id: string): Promise<string> {
     try {
-      await this.questionRepository.delete({id});
+      await this.questionRepository.delete({ id });
 
       return "Question deleted"
     } catch (ex) {
@@ -320,7 +360,7 @@ export class QuestionsService {
 
   public async getTotalQuestions(category: string): Promise<number> {
     try {
-      return await this.questionRepository.countBy({category});
+      return await this.questionRepository.countBy({ category });
 
     } catch (ex) {
       throw new CustomException(

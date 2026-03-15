@@ -5,6 +5,7 @@ import { RoleGuard } from 'src/middleware/guards/role.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs-extra';
 import { StateGuard } from 'src/middleware/guards/state.guard';
+import * as path from 'path';
 
 
 @Controller('api/v1/load')
@@ -17,7 +18,18 @@ export class LoadController {
     @UseGuards(AuthGuard(), RoleGuard, StateGuard)
     @UseInterceptors(FileInterceptor('file'))
     public async loadData(@UploadedFile() file): Promise<string> {
-        const filePath = `src/load/data-source/${new Date().toISOString().replace(/[:T.-]/g, '')}-${file.originalname}`;
+        console.log('CONTROLLER HIT');
+        console.log('Uploaded file object:', file);
+
+        const uploadDir = path.join(process.cwd(), '..', 'uploads');
+
+        await fs.ensureDir(uploadDir);
+
+        const filePath = path.join(
+            uploadDir,
+            `${new Date().toISOString().replace(/[:T.-]/g, '')}-${file.originalname}`,
+        );
+
         await fs.writeFile(filePath, file.buffer);
 
         return await this.loadService.loadData(file.buffer);

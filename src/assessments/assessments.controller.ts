@@ -20,6 +20,12 @@ import { RoleGuard } from 'src/middleware/guards/role.guard';
 export class AssessmentsController {
   public constructor(private readonly assessmentService: AssessmentsService) { }
 
+  @Get('assessment/assigned') //service endpoint, maintenance purposes through Postman only
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async getAssignedAssessments(): Promise<Assessment[]> {
+    return await this.assessmentService.getAssignedAssessments();
+  }
+
   @Get('assessment/ongoing/:userID')
   @UseGuards(AuthGuard(), StateGuard)
   public async getActiveAssessment(
@@ -57,7 +63,7 @@ export class AssessmentsController {
   @UseGuards(AuthGuard(), RoleGuard, StateGuard)
   public async assignAssessment(
     @Body() payload: AssignAssessmentDTO,
-  ): Promise<Assessment> {
+  ): Promise<Assessment[]> {
     return await this.assessmentService.assignAssessment(payload);
   }
 

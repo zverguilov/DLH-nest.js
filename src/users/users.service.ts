@@ -8,12 +8,77 @@ import { UserPassResetDTO } from 'src/models/user/user-pass-reset.dto';
 import { UserRoleDTO } from 'src/models/user/user-role.dto';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { TopAchieverDTO } from 'src/models/user/top-achiever.dto';
+import { Assessment } from 'src/data/entities/assessment.entity';
 
 @Injectable()
 export class UsersService {
   public constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
+    @InjectRepository(Assessment) private readonly assessmentRepository: Repository<Assessment>
   ) { }
+
+  public async getTopAchievers(assigned: boolean): Promise<TopAchieverDTO[]> {
+
+    const m = 25; // Bayesian weight
+
+    const { avg } = await this.assessmentRepository
+      .createQueryBuilder('a')
+      .select('AVG(a.grade)', 'avg')
+      .where('a.status = :status', { status: 'Finished' })
+      .andWhere('a.grade IS NOT NULL')
+      .andWhere('a.is_assigned = :assigned', { assigned })
+      .getRawOne();
+
+    const globalAvg = Number(avg) || 0;
+
+    console.log(`global avg: ${globalAvg}`)
+
+    const rawResults = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoin('user.assessments', 'assessment')
+      .select([
+        'user.id AS id',
+        'user.full_name AS name'
+      ])
+      .addSelect('COUNT(assessment.id)', 'totalExams')
+      .addSelect('SUM(assessment.grade)', 'sumGrades')
+      .addSelect(`
+      (
+        (
+          COALESCE(SUM(assessment.grade),0)
+          +
+          :m * :globalAvg
+        )
+        /
+        (COUNT(assessment.id) + :m)
+      )
+    `, 'bayesianScore')
+      .where('assessment.status = :status', { status: 'Finished' })
+      .andWhere('assessment.grade IS NOT NULL')
+      .andWhere('assessment.is_assigned = :assigned', { assigned })
+      .setParameters({
+        m,
+        globalAvg
+      })
+      .groupBy('user.id')
+      .addGroupBy('user.full_name')
+      .orderBy('bayesianScore', 'DESC')
+      .limit(3)
+      .getRawMany();
+
+      console.log(`raw many: ${rawResults}`)
+
+    return rawResults.map(r => ({
+      id: r.id,
+      name: r.name,
+      adjusted_score: Math.round(Number(r.bayesianScore))
+    }));
+  }
+
+  public async getNumberOfUsers(): Promise<number> {
+    return await this.userRepository.count();
+  }
 
   public async getAllUsers(
     limit?: number,
@@ -32,7 +97,7 @@ export class UsersService {
         'user.state',
       ])
       .orderBy('user.full_name', 'ASC')
-      .addOrderBy('user.id', 'ASC'); // вторичен ключ
+      .addOrderBy('user.id', 'ASC');
 
     // Composite cursor
     if (cursorName && cursorId) {
