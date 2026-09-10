@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { Assignment } from './data/entities/assignment.entity';
@@ -9,16 +10,24 @@ import { Question } from './data/entities/question.entity';
 import { QuestionInstance } from './data/entities/question_instance.entity';
 import { User } from './data/entities/user.entity';
 
+function requireEnv(name: string): string {
+    const value = process.env[name];
+    if (!value) {
+        throw new Error(`Missing required environment variable: ${name}`);
+    }
+    return value;
+}
+
 export const AppDataSource = new DataSource({
     type: 'mysql',
-    host: 'localhost',  
-    port: 3308, 
-    username: 'admin',  
-    password: 'admin', 
-    database: 'snowmandb',  
-    synchronize: false, 
+    host: requireEnv('DB_HOST'),
+    port: Number(requireEnv('DB_PORT')),
+    username: requireEnv('DB_USERNAME'),
+    password: requireEnv('DB_PASSWORD'),
+    database: requireEnv('DB_DATABASE_NAME'),
+    synchronize: false,
     logging: false,
-    entities: ['src/**/*.entity.ts'],   
-    migrations: ['src/migrations/*.ts'], 
+    entities: ['src/**/*.entity.ts'],
+    migrations: ['src/migrations/*.ts'],
     subscribers: [],
 });
