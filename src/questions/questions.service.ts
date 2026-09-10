@@ -131,7 +131,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service error while retrieving most wrong questions: ${ex.message}`,
-        ex.message,
+        ex.statusCode,
       );
     }
   }
@@ -175,7 +175,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service error while retrieving questions: ${ex.message}`,
-        ex.message,
+        ex.statusCode,
       );
     }
   }
@@ -205,7 +205,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service error while retrieving flagged questions: ${ex.message}`,
-        ex.message,
+        ex.statusCode,
       );
     }
   }
@@ -230,7 +230,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service mass retrieval error: ${ex.message}`,
-        ex.message,
+        ex.statusCode,
       );
     }
   }
@@ -253,7 +253,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service single retrieval error: ${ex.message}`,
-        ex.message,
+        ex.statusCode,
       );
     }
   }
@@ -270,7 +270,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service single retrieval error: ${ex.message}`,
-        ex.message,
+        ex.statusCode,
       );
     }
   }
@@ -352,7 +352,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service single retrieval error: ${ex.message}`,
-        ex.message,
+        ex.statusCode,
       );
     }
   }
@@ -364,7 +364,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service category questions total number error: ${ex.message}`,
-        ex.message,
+        ex.statusCode,
       );
     }
   }

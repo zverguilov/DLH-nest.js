@@ -9,5 +9,5 @@ export class CreateAssignmentDTO {
   public assigned_by: User;
 
   @Expose()
-  public deadline: Date;
+  public deadline: string;
 }
