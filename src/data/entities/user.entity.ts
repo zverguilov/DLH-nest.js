@@ -1,7 +1,8 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { IsEmail } from 'class-validator';
 import { Comment } from './comment.entity';
 import { Assessment } from './assessment.entity';
+import { Assignment } from './assignment.entity';
 
 @Entity('user')
 export class User {
@@ -33,4 +34,10 @@ export class User {
 
   @OneToMany(() => Assessment, (assessment) => assessment.user)
   public assessments: Promise<Assessment[]>;
+
+  @OneToMany(
+    () => Assignment,
+    (assignment) => assignment.assigned_by
+  )
+  public assignments: Promise<Assignment>;
 }

@@ -26,8 +26,10 @@ export class QuestionInstance {
     public to_review: boolean;
 
     @ManyToOne(type => Question, question => question.instances, { onDelete: 'CASCADE' })
-    public question: Promise<Question>
+    public question: Question
 
-    @ManyToOne(type => Assessment, assessment => assessment.question_instances)
-    public assessment: Promise<Assessment>
+    @ManyToOne(() => Assessment, assessment => assessment.question_instances, {
+        onDelete: 'CASCADE'
+    })
+    public assessment: Assessment
 }

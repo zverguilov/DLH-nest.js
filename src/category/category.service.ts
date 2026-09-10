@@ -48,7 +48,7 @@ export class CategoryService {
   public async getCategoryByName(name: string): Promise<Category | null> {
     try {
       const category = await this.categoryRepository
-        .createQueryBuilder()
+        .createQueryBuilder('category')
         .where('category.name = :name', { name: name })
         .getOne();
 

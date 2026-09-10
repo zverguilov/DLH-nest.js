@@ -32,8 +32,6 @@ export class UsersService {
 
     const globalAvg = Number(avg) || 0;
 
-    console.log(`global avg: ${globalAvg}`)
-
     const rawResults = await this.userRepository
       .createQueryBuilder('user')
       .leftJoin('user.assessments', 'assessment')
@@ -66,8 +64,6 @@ export class UsersService {
       .orderBy('bayesianScore', 'DESC')
       .limit(3)
       .getRawMany();
-
-      console.log(`raw many: ${rawResults}`)
 
     return rawResults.map(r => ({
       id: r.id,

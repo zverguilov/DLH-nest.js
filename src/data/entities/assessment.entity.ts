@@ -8,6 +8,7 @@ import {
 import { QuestionInstance } from './question_instance.entity';
 import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-question-instance.dto';
 import { User } from './user.entity';
+import { Assignment } from './assignment.entity';
 
 @Entity('assessment')
 export class Assessment {
@@ -51,8 +52,14 @@ export class Assessment {
     () => QuestionInstance,
     (questionInstance) => questionInstance.assessment,
   )
-  public question_instances: Promise<GetQuestionInstanceDTO[]>;
+  public question_instances: QuestionInstance[];
+
+  @ManyToOne (
+    () => Assignment,
+    (assignment) => assignment.assessments
+  )
+  public assignment: Assignment;
 
   @ManyToOne(() => User, (user) => user.assessments)
-  public user: Promise<User>;
+  public user: User;
 }

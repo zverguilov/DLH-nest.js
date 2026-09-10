@@ -15,11 +15,16 @@ import { UsersService } from 'src/users/users.service';
 import { Category } from 'src/data/entities/category.entity';
 import { CategoryService } from 'src/category/category.service';
 import { Comment } from 'src/data/entities/comment.entity';
+import { AuthService } from 'src/auth/auth/auth.service';
+import { AssignmentsService } from 'src/assignments/assignments.service';
+import { JwtService } from '@nestjs/jwt';
+import { Assignment } from 'src/data/entities/assignment.entity';
+import { ConfigService } from 'src/config/config.service';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    TypeOrmModule.forFeature([Assessment, Question, QuestionInstance, User, Answer, Category, Comment])
+    TypeOrmModule.forFeature([Assessment, Assignment, Question, QuestionInstance, User, Answer, Category, Comment])
   ],
   controllers: [AssessmentsController],
   providers: [
@@ -29,6 +34,10 @@ import { Comment } from 'src/data/entities/comment.entity';
     AnswersService,
     UsersService,
     CategoryService,
+    AuthService,
+    AssignmentsService,
+    JwtService,
+    ConfigService
   ],
 })
 export class AssessmentsModule {}

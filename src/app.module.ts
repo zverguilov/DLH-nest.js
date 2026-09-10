@@ -17,6 +17,7 @@ import { AuthModule } from './auth/auth/auth.module';
 import { APP_FILTER } from '@nestjs/core';
 import { ErrorFilter } from './middleware/filters/error.filter';
 import { CategoryModule } from './category/category.module';
+import { AssignmentsModule } from './assignments/assignments.module';
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { CategoryModule } from './category/category.module';
     }),
     LoadModule,
     CategoryModule,
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
+    AssignmentsModule
   ],
   controllers: [AppController],
   providers: [

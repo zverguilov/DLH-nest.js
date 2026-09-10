@@ -10,14 +10,37 @@ import { UserRegDTO } from 'src/models/user/user-reg.dto';
 import { UserCreatedDTO } from 'src/models/user/user-created.dto';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { UsersService } from 'src/users/users.service';
+import { UserGetDTO } from 'src/models/user/user-get.dto';
+import { Request } from 'express';
+import { ConfigService } from 'src/config/config.service';
+
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly usersRepository: Repository<User>,
     private readonly jwtService: JwtService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
+    private readonly configService: ConfigService
   ) { }
+
+  public async getCurrentUser(request: Request): Promise<User> {
+
+    const authHeader = (request.headers as { authorization?: string }).authorization?.toString();
+    if (!authHeader) {
+      throw new CustomException('No authorization header', 401);
+    }
+
+    try {
+      const token = authHeader.split(' ')[1];
+
+      const jwtServ = new JwtService({ secret: this.configService.jwtSecret });
+      const decoded = await jwtServ.verifyAsync(token);
+      return this.usersService.retrieveUser(decoded.id);
+    } catch (ex) {
+      throw new CustomException('Invalid token', 401);
+    }
+  }
 
   public async login(user: UserLoginDTO): Promise<any> {
     if (!user.email) throw new CustomException(`Auth Service login error: email is missing.`, 400);
@@ -55,9 +78,9 @@ export class AuthService {
 
     try {
       const loginMethod = { email: user.email };
-      
+
       const foundUser: User = await this.usersRepository
-      .findOne({ where: { ...loginMethod, is_deleted: false } });
+        .findOne({ where: { ...loginMethod, is_deleted: false } });
 
       if (foundUser) throw new CustomException(`user already exists`, 500);
 

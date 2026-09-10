@@ -3,13 +3,17 @@ import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Assessment } from 'src/data/entities/assessment.entity';
 import { QuestionsService } from 'src/questions/questions.service';
-import { DataSource, Repository, LessThanOrEqual } from 'typeorm';
+import { DataSource, Repository, LessThanOrEqual, EntityManager } from 'typeorm';
 import { QuestionInstancesService } from 'src/question-instances/question-instances.service';
 import { CreateAssessmentDTO } from 'src/models/assessment/create-assessment.dto';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { PASSING_GRADE } from 'src/constants';
 import { Category } from 'src/data/entities/category.entity';
 import { AssignAssessmentDTO } from 'src/models/assessment/assign-assessment.dto';
+import { Request } from 'express';
+import { AuthService } from 'src/auth/auth/auth.service';
+import { AssignmentsService } from 'src/assignments/assignments.service';
+import { User } from 'src/data/entities/user.entity';
 
 @Injectable()
 export class AssessmentsService {
@@ -21,6 +25,8 @@ export class AssessmentsService {
     private readonly categoryRepository: Repository<Category>,
     private readonly questionsService: QuestionsService,
     private readonly questionInstanceService: QuestionInstancesService,
+    private readonly authService: AuthService,
+    private readonly assignmentService: AssignmentsService
   ) { }
 
   @Cron('*/30 * * * * *')
@@ -101,16 +107,20 @@ export class AssessmentsService {
     try {
       const ongoingAssessment = await this.assessmentRepository
         .createQueryBuilder('assessment')
-        .select([
-          'assessment.id',
-          'assessment.time_started',
-          'assessment.exam_type',
-        ])
-        .where('assessment.user = :user', { user: userID })
+        // .select([
+        //   'assessment.id',
+        //   'assessment.time_started',
+        //   'assessment.exam_type',
+        //   'assessment.is_assigned'
+        // ])
+        .where('assessment.userId = :user', { user: userID })
         .andWhere('assessment.submitted = :submitted', { submitted: false })
+        .andWhere('assessment.is_assigned = :is_assigned', { is_assigned: false })
         .getOne();
 
-      return ongoingAssessment;
+        console.log(ongoingAssessment)
+
+      return ongoingAssessment
     } catch (ex) {
       throw new CustomException(
         `Assessment Service error while retrieving active assessment: ${ex.message}`,
@@ -124,15 +134,27 @@ export class AssessmentsService {
     limit?: number,
     cursorTime?: string,
     cursorId?: string,
+    is_assigned?: boolean,
+    is_pending?: boolean
   ): Promise<Assessment[]> {
 
     const qb = this.assessmentRepository
       .createQueryBuilder('assessment')
-      .where('assessment.user = :user', { user: userID })
-      .andWhere('assessment.submitted = true')
-      .andWhere('assessment.is_deleted = false')
-      .orderBy('assessment.time_started', 'DESC')
+      .where('assessment.userId = :user', { user: userID })
+      .orderBy('assessment.deadline', 'ASC')
       .addOrderBy('assessment.id', 'DESC');
+
+    if (is_assigned !== undefined) {
+      qb.andWhere('assessment.is_assigned = :isAssigned', {
+        isAssigned: is_assigned
+      });
+    }
+
+    if (is_pending !== undefined) {
+      qb.andWhere('assessment.submitted = :isSubmitted', {
+        isSubmitted: !is_pending
+      })
+    }
 
     if (cursorTime && cursorId) {
       qb.andWhere(
@@ -153,32 +175,38 @@ export class AssessmentsService {
 
   public async createRandomAssessment(
     payload: CreateAssessmentDTO,
+    manager?: EntityManager
   ): Promise<Assessment> {
     try {
-      if (!payload.is_assigned) {
-        const ongoingAssessment = await this.assessmentRepository
-          .createQueryBuilder('assessment')
-          .where('assessment.user = :user', { user: payload.user })
-          .andWhere('assessment.submitted = :submitted', { submitted: false })
-          .getOne();
+      const repo = manager
+        ? manager.getRepository(Assessment)
+        : this.assessmentRepository;
 
-        if (ongoingAssessment)
+      if (!payload.is_assigned) {
+        const ongoingAssessment = await this.getActiveAssessment(payload.user);
+
+                // console.log(`${ongoingAssessment}, ${typeof ongoingAssessment}, ${payload.user}`)
+
+        if (ongoingAssessment) {
           throw new CustomException(
             'You can only have one active training assessment.',
             400,
           );
+        }
       }
 
-      const newAssessment = await this.assessmentRepository
+      const newAssessment = await repo
         .createQueryBuilder()
         .insert()
-        .into('assessment')
+        .into(Assessment)
         .values({
           time_started: new Date(),
           exam_type: payload.exam_type,
-          user: payload.user,
+          user: { id: payload.user },
         })
         .execute();
+
+      const assessmentId = newAssessment.identifiers[0].id;
 
       const randomQuestionsBatch = await this.questionsService.getRandomBatch(
         payload.exam_type,
@@ -186,45 +214,71 @@ export class AssessmentsService {
 
       await this.questionInstanceService.createQuestionInstances(
         randomQuestionsBatch,
-        newAssessment.identifiers[0].id,
+        assessmentId,
+        manager
       );
 
-      const fullAssessment = await this.assessmentRepository
+      const fullAssessment = await repo
         .createQueryBuilder('assessment')
         .select([
           'assessment.id',
           'assessment.time_started',
           'assessment.exam_type',
         ])
-        .where('assessment.id = :id', { id: newAssessment.identifiers[0].id })
+        .where('assessment.id = :id', { id: assessmentId })
         .andWhere('assessment.is_deleted = :is_deleted', { is_deleted: false })
         .getOne();
 
       return fullAssessment;
+
     } catch (ex) {
       throw new CustomException(
         `Assessment Service error while creating record: ${ex.message}`,
-        ex.statusCode,
+        ex.statusCode || 500,
       );
     }
   }
 
   public async assignAssessment(
     payload: AssignAssessmentDTO,
+    request: Request
   ): Promise<Assessment[]> {
     try {
       return await this.dataSource.transaction(async (manager) => {
         const createdAssessments: Assessment[] = [];
+        let currentUser = new User;
+        let assignment = '';
+
+        try {
+          currentUser = await this.authService.getCurrentUser(request);
+        } catch (ex) {
+          throw new CustomException(
+            `Failed to get current user: ${ex.message}`,
+            ex.statusCode,
+          );
+        }
+
+        try {
+          assignment = await this.assignmentService.createAssignment({ ...payload, assigned_by: currentUser });
+        } catch (ex) {
+          throw new CustomException(
+            `Failed to create assignment: ${ex.message}`,
+            ex.statusCode,
+          );
+        }
 
         for (const userId of payload.users) {
           let newAssessment: Assessment;
 
           try {
-            newAssessment = await this.createRandomAssessment({
-              exam_type: payload.exam_type,
-              user: userId,
-              is_assigned: true
-            });
+            newAssessment = await this.createRandomAssessment(
+              {
+                exam_type: payload.exam_type,
+                user: userId,
+                is_assigned: true
+              },
+              manager
+            );
           } catch (ex) {
             throw new CustomException(
               `Failed to create assessment for user ${userId}: ${ex.message}`,
@@ -237,7 +291,8 @@ export class AssessmentsService {
               is_assigned: true,
               attempts: payload.attempts,
               time_started: null,
-              deadline: payload.deadline
+              deadline: payload.deadline,
+              assignment: { id: assignment }
             });
 
 
@@ -316,5 +371,10 @@ export class AssessmentsService {
         submitted: false
       }
     });
+  }
+
+  public async getAssessmentCategory(assessmentID: string): Promise<string> {
+    const assessment = await this.assessmentRepository.findOne({ where: { id: assessmentID } })
+    return assessment.exam_type
   }
 }

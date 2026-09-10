@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AnswersService } from 'src/answers/answers.service';
+import { Answer } from 'src/data/entities/answer.entity';
 import { Question } from 'src/data/entities/question.entity';
 import { QuestionInstance } from 'src/data/entities/question_instance.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
@@ -9,12 +10,13 @@ import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-questio
 import { QuestionInstanceStatusDTO } from 'src/models/question-instance/question-instance-status.dto';
 import { ReportQuestionInstanceDTO } from 'src/models/question-instance/report-question-instance.dto';
 import { ReviewQuestionInstanceDTO } from 'src/models/question-instance/review-question-instance.dto';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 @Injectable()
 export class QuestionInstancesService {
     public constructor(
         @InjectRepository(QuestionInstance) private readonly questionInstanceRepository: Repository<QuestionInstance>,
+        @InjectRepository(Answer) private readonly answerRepository: Repository<Answer>,
         private readonly answersService: AnswersService,
     ) { }
 
@@ -100,30 +102,55 @@ export class QuestionInstancesService {
         }
     }
 
-    public async createQuestionInstances(questions: Question[], assessmentID: string): Promise<QuestionInstance[]> {
+    public async createQuestionInstances(
+        questions: Question[],
+        assessmentID: string,
+        manager?: EntityManager
+    ): Promise<QuestionInstance[]> {
         try {
-            let questionInstances = [];
+            const repo = manager
+                ? manager.getRepository(QuestionInstance)
+                : this.questionInstanceRepository;
 
-            for (let question of questions) {
-                let correctAnswers = (await this.answersService.getCorrectAnswers(question.id)).length;
-                let newQuestionInstance = await this.questionInstanceRepository.createQueryBuilder()
-                    .insert()
-                    .into('question_instance')
-                    .values({
-                        question: question.id,
-                        assessment: assessmentID,
-                        correct_answers: correctAnswers,
-                        assessment_index: questions.indexOf(question)
-                    })
-                    .execute()
+            const answerRepo = manager
+                ? manager.getRepository(Answer)
+                : this.answerRepository;
 
-                questionInstances.push(newQuestionInstance);
-            }
+            const correctAnswersRaw = await answerRepo
+                .createQueryBuilder('a')
+                .select('a.question', 'questionId')
+                .addSelect('COUNT(a.id)', 'correctCount')
+                .where('a.question IN (:...ids)', { ids: questions.map(q => q.id) })
+                .andWhere('a.is_correct = :isCorrect', { isCorrect: true })
+                .andWhere('a.is_deleted = :isDeleted', { isDeleted: false })
+                .groupBy('a.question')
+                .getRawMany();
 
-            return questionInstances;
+            const correctAnswersMap = new Map(
+                correctAnswersRaw.map(r => [r.questionId, Number(r.correctCount)])
+            );
+
+            const values = questions.map((q, index) => ({
+                question: { id: q.id },
+                assessment: { id: assessmentID },
+                correct_answers: correctAnswersMap.get(q.id) || 0,
+                assessment_index: index
+            }));
+
+            await repo
+                .createQueryBuilder()
+                .insert()
+                .into(QuestionInstance)
+                .values(values)
+                .execute();
+
+            return values as QuestionInstance[];
 
         } catch (ex) {
-            throw new CustomException(`Question Instance Service insert error: ${ex.message}`, ex.statusCode)
+            throw new CustomException(
+                `Question Instance Service insert error: ${ex.message}`,
+                ex.statusCode
+            );
         }
     }
 
@@ -138,7 +165,7 @@ export class QuestionInstancesService {
 
             if (payload.selected_answers) {
                 let correctAnswers = (await this.answersService.getCorrectAnswers(payload.question_id)).map(answer => answer.id);
-                questionInstance.is_correct = payload.selected_answers.split(',').every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selected_answers.split(',').length;                
+                questionInstance.is_correct = payload.selected_answers.split(',').every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selected_answers.split(',').length;
             }
             delete payload.question_id;
 

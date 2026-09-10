@@ -220,8 +220,7 @@ export class QuestionsService {
       const randomQuestions: Question[] = await this.questionRepository
         .createQueryBuilder('question')
         .leftJoinAndSelect('question.answers', 'answer')
-        .where('question.category = :categoryID', { categoryID: category.id })
-        .andWhere('question.is_deleted = :is_deleted', { is_deleted: false })
+        .where('question.category = :categoryName', { categoryName })
         .select(['question.id', 'question.body', 'answer.id', 'answer.body'])
         .orderBy('RAND()')
         .take(category?.number_of_questions || ASSESSMENT_QUESTIONS)

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { AuthGuard } from '@nestjs/passport';
 import { StateGuard } from 'src/middleware/guards/state.guard';
@@ -9,15 +9,7 @@ import { GetCategoryDTO } from 'src/models/category/get-category.dto';
 
 @Controller('api/v1')
 export class CategoryController {
-  public constructor(private readonly categoryService: CategoryService) {}
-
-  @Get('category/:name')
-  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-  public async getCategoryByName(
-    @Body('name') name: string,
-  ): Promise<Category> {
-    return this.categoryService.getCategoryByName(name);
-  }
+  public constructor(private readonly categoryService: CategoryService) { }
 
   @Post('category')
   @UseGuards(AuthGuard(), RoleGuard, StateGuard)
@@ -27,6 +19,11 @@ export class CategoryController {
     return this.categoryService.createCategory(payload);
   }
 
+  @Put('category')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async updateCategory(@Body() categoryInfo: Category): Promise<string> {
+    return this.categoryService.updateCategory(categoryInfo);
+  }
 
   @Get('category')
   @UseGuards(AuthGuard(), RoleGuard, StateGuard)
@@ -34,9 +31,11 @@ export class CategoryController {
     return this.categoryService.getAllCategories();
   }
 
-  @Put('category')
+  @Get('category/:name')
   @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-  public async updateCategory(@Body() categoryInfo: Category): Promise<string> {
-    return this.categoryService.updateCategory(categoryInfo);
+  public async getCategoryByName(
+    @Param('name') name: string,
+  ): Promise<Category> {
+    return this.categoryService.getCategoryByName(name);
   }
 }

@@ -30,10 +30,10 @@ export class Question {
     public answers: Promise<Answer[]>
 
     @OneToMany(type => QuestionInstance, questionInstance => questionInstance.question)
-    public instances: Promise<QuestionInstance[]>
+    public instances: QuestionInstance[]
 
     @OneToMany(type => Comment, comment => comment.question)
-    public comments: Promise<Comment[]>
+    public comments: Comment[]
 
     @OneToOne(type => QuestionStat, questionStat => questionStat.question)
     public stat: Promise<QuestionStat>

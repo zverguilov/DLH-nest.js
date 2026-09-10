@@ -18,7 +18,9 @@ import { Assessment } from 'src/data/entities/assessment.entity';
     ConfigModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
-      imports: [ConfigModule, UsersModule],
+      imports: [ConfigModule,
+        // UsersModule
+      ],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.jwtSecret,
@@ -29,7 +31,10 @@ import { Assessment } from 'src/data/entities/assessment.entity';
     }),
     TypeOrmModule.forFeature([User, Assessment])
   ],
-  providers: [AuthService, ConfigService, JwtStrategy, UsersService],
+  providers: [AuthService,
+    // ConfigService,
+    JwtStrategy,
+    UsersService],
   controllers: [AuthController],
   exports: [
     AuthService,
