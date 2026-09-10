@@ -48,11 +48,16 @@ export class AssessmentsService {
     );
   }
 
-  public async submitAssessment(assessmentID: string): Promise<Assessment> {
+  public async submitAssessment(assessmentID: string, requestUserId: string): Promise<Assessment> {
     try {
       const assessment: Assessment = await this.assessmentRepository.findOne({
         where: { id: assessmentID },
+        relations: ['user'],
       });
+
+      if (!assessment || assessment.user?.id !== requestUserId) {
+        throw new CustomException('You do not have access to this assessment.', 403);
+      }
 
       const category: Category = await this.categoryRepository
         .createQueryBuilder('category')
@@ -329,11 +334,17 @@ export class AssessmentsService {
 
   public async startAssignedAssessment(
     assessmentID: string,
+    requestUserId: string,
   ): Promise<Assessment> {
     try {
       const assessment: Assessment = await this.assessmentRepository.findOne({
         where: { id: assessmentID },
+        relations: ['user'],
       });
+
+      if (!assessment || assessment.user?.id !== requestUserId) {
+        throw new CustomException('You do not have access to this assessment.', 403);
+      }
 
       if (!assessment.is_assigned) {
         throw new CustomException(

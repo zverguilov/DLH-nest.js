@@ -25,9 +25,11 @@ export class LoadController {
 
         await fs.ensureDir(uploadDir);
 
+        const safeOriginalName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
+
         const filePath = path.join(
             uploadDir,
-            `${new Date().toISOString().replace(/[:T.-]/g, '')}-${file.originalname}`,
+            `${new Date().toISOString().replace(/[:T.-]/g, '')}-${safeOriginalName}`,
         );
 
         await fs.writeFile(filePath, file.buffer);

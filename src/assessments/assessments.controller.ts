@@ -18,6 +18,8 @@ import { StateGuard } from 'src/middleware/guards/state.guard';
 import { AssignAssessmentDTO } from 'src/models/assessment/assign-assessment.dto';
 import { RoleGuard } from 'src/middleware/guards/role.guard';
 import { Request } from 'express';
+import { CustomException } from 'src/middleware/exception/custom-exception';
+import { JwtPayload } from 'src/auth/auth/jwt-payload';
 
 @Controller('api/v1')
 export class AssessmentsController {
@@ -33,7 +35,11 @@ export class AssessmentsController {
   @UseGuards(AuthGuard(), StateGuard)
   public async getActiveAssessment(
     @Param('userID') userID: string,
+    @Req() request: Request,
   ): Promise<Assessment> {
+    if (userID !== ((request as any).user as JwtPayload).id) {
+      throw new CustomException('You do not have access to this resource.', 403);
+    }
     return await this.assessmentService.getActiveAssessment(userID);
   }
 
@@ -49,12 +55,17 @@ export class AssessmentsController {
   @UseGuards(AuthGuard(), StateGuard)
   public async getUserAssessments(
     @Param('userID') userID: string,
+    @Req() request: Request,
     @Query('limit') limit?: string,
     @Query('cursorTime') cursorTime?: string,
     @Query('cursorId') cursorId?: string,
     @Query('is_assigned') is_assigned?: string,
     @Query('is_pending') is_pending?: string
   ): Promise<Assessment[]> {
+    const requestUser = (request as any).user as JwtPayload;
+    if (userID !== requestUser.id && requestUser.role !== 'Admin') {
+      throw new CustomException('You do not have access to this resource.', 403);
+    }
     return await this.assessmentService.getMyAssessments(
       userID,
       limit ? +limit : undefined,
@@ -86,15 +97,17 @@ export class AssessmentsController {
   @UseGuards(AuthGuard(), StateGuard)
   public async startAssignedAssessment(
     @Param('assessmentID') assessmentID: string,
+    @Req() request: Request,
   ): Promise<Assessment> {
-    return await this.assessmentService.startAssignedAssessment(assessmentID);
+    return await this.assessmentService.startAssignedAssessment(assessmentID, ((request as any).user as JwtPayload).id);
   }
 
   @Put('assessment/submit/:assessmentID')
   @UseGuards(AuthGuard(), StateGuard)
   public async submitAssessment(
     @Param('assessmentID') assessmentID: string,
+    @Req() request: Request,
   ): Promise<Assessment> {
-    return await this.assessmentService.submitAssessment(assessmentID);
+    return await this.assessmentService.submitAssessment(assessmentID, ((request as any).user as JwtPayload).id);
   }
 }

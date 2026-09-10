@@ -60,7 +60,7 @@ export class QuestionsService {
     } catch (ex) {
       throw new CustomException(
         `Question Service error while retrieving category error percentages: ${ex.message}`,
-        ex.message,
+        500,
       );
     }
   }

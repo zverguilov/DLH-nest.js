@@ -1,11 +1,12 @@
 import { JwtPayload } from './jwt-payload';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from 'src/config/config.service';
 import { User } from 'src/data/entities/user.entity';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -25,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       .count({ where: { id: payload.id, is_deleted: false } })) > 0;
 
     if (!isFoundUser) {
-      throw new BadRequestException(401);
+      throw new CustomException('Unauthorized', 401);
     }
 
     return payload;

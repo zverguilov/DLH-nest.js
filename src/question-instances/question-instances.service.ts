@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AnswersService } from 'src/answers/answers.service';
 import { Answer } from 'src/data/entities/answer.entity';
+import { Assessment } from 'src/data/entities/assessment.entity';
 import { Question } from 'src/data/entities/question.entity';
 import { QuestionInstance } from 'src/data/entities/question_instance.entity';
 import { CustomException } from 'src/middleware/exception/custom-exception';
@@ -17,8 +18,20 @@ export class QuestionInstancesService {
     public constructor(
         @InjectRepository(QuestionInstance) private readonly questionInstanceRepository: Repository<QuestionInstance>,
         @InjectRepository(Answer) private readonly answerRepository: Repository<Answer>,
+        @InjectRepository(Assessment) private readonly assessmentRepository: Repository<Assessment>,
         private readonly answersService: AnswersService,
     ) { }
+
+    private async verifyAssessmentOwnership(assessmentID: string, requestUserId: string): Promise<void> {
+        const assessment = await this.assessmentRepository.findOne({
+            where: { id: assessmentID },
+            relations: ['user'],
+        });
+
+        if (!assessment || assessment.user?.id !== requestUserId) {
+            throw new CustomException('You do not have access to this assessment.', 403);
+        }
+    }
 
     public async getQIStatus(assessmentID: string): Promise<QuestionInstanceStatusDTO[]> {
         try {
@@ -32,8 +45,10 @@ export class QuestionInstancesService {
         }
     }
 
-    public async getReport(assessmentID: string): Promise<ReportQuestionInstanceDTO[]> {
+    public async getReport(assessmentID: string, requestUserId: string): Promise<ReportQuestionInstanceDTO[]> {
         try {
+            await this.verifyAssessmentOwnership(assessmentID, requestUserId);
+
             return await this.questionInstanceRepository.createQueryBuilder('question_instance')
                 .where('question_instance.assessment = :id', { id: assessmentID })
                 .andWhere('question_instance.is_correct = false')
@@ -57,8 +72,10 @@ export class QuestionInstancesService {
         }
     }
 
-    public async getReviewStatus(assessmentID: string): Promise<ReviewQuestionInstanceDTO[]> {
+    public async getReviewStatus(assessmentID: string, requestUserId: string): Promise<ReviewQuestionInstanceDTO[]> {
         try {
+            await this.verifyAssessmentOwnership(assessmentID, requestUserId);
+
             return await this.questionInstanceRepository.createQueryBuilder('question_instance')
                 .where('question_instance.assessment = :id', { id: assessmentID })
                 .select([
@@ -75,8 +92,10 @@ export class QuestionInstancesService {
         }
     }
 
-    public async getQuestionInstancePackage(assessmentID: string, questionNumber: number): Promise<GetQuestionInstanceDTO> {
+    public async getQuestionInstancePackage(assessmentID: string, questionNumber: number, requestUserId: string): Promise<GetQuestionInstanceDTO> {
         try {
+            await this.verifyAssessmentOwnership(assessmentID, requestUserId);
+
             return await this.questionInstanceRepository.createQueryBuilder('question_instance')
                 .leftJoin('question_instance.question', 'question')
                 .leftJoin('question.answers', 'answer')
@@ -154,22 +173,31 @@ export class QuestionInstancesService {
         }
     }
 
-    public async mark(instanceID: string, payload: MarkPayloadDTO): Promise<string> {
+    public async mark(instanceID: string, payload: MarkPayloadDTO, requestUserId: string): Promise<string> {
         try {
-            let allCorrect = false;
             let questionInstance: QuestionInstance = await this.questionInstanceRepository.createQueryBuilder('question_instance')
+                .leftJoinAndSelect('question_instance.assessment', 'assessment')
+                .leftJoinAndSelect('assessment.user', 'user')
                 .where('question_instance.id = :id', { id: instanceID })
                 .getOne();
 
+            if (!questionInstance || questionInstance.assessment?.user?.id !== requestUserId) {
+                throw new CustomException('You do not have access to this question instance.', 403);
+            }
+
             if (payload.selected_answers && !payload.selected_answers.length) payload.selected_answers = null;
 
+            let isCorrect = questionInstance.is_correct;
             if (payload.selected_answers) {
                 let correctAnswers = (await this.answersService.getCorrectAnswers(payload.question_id)).map(answer => answer.id);
-                questionInstance.is_correct = payload.selected_answers.split(',').every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selected_answers.split(',').length;
+                isCorrect = payload.selected_answers.split(',').every(id => correctAnswers.includes(id)) && correctAnswers.length === payload.selected_answers.split(',').length;
             }
-            delete payload.question_id;
 
-            await this.questionInstanceRepository.update(instanceID, { ...questionInstance, ...payload });
+            await this.questionInstanceRepository.update(instanceID, {
+                selected_answers: payload.selected_answers,
+                to_review: payload.to_review,
+                is_correct: isCorrect,
+            });
 
             return 'Question instance updated.'
 
