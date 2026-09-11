@@ -47,4 +47,11 @@ export class ConfigService {
   get jwtExpireTime(): number {
     return Number(requireEnv('JWT_EXPIRE'));
   }
+
+  get corsOrigin(): boolean | string[] {
+    const raw = requireEnv('CORS_ORIGIN');
+    if (raw === 'true') return true;
+    if (raw === 'false') return false;
+    return raw.split(',').map((origin) => origin.trim());
+  }
 }
