@@ -20,10 +20,17 @@ import { RoleGuard } from 'src/middleware/guards/role.guard';
 import { Request } from 'express';
 import { CustomException } from 'src/middleware/exception/custom-exception';
 import { JwtPayload } from 'src/auth/auth/jwt-payload';
+import { AssessmentStatsOverviewDTO } from 'src/models/assessment/assessment-stats.dto';
 
 @Controller('api/v1')
 export class AssessmentsController {
   public constructor(private readonly assessmentService: AssessmentsService) { }
+
+  @Get('assessment/stats')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async getOverviewStats(): Promise<AssessmentStatsOverviewDTO> {
+    return await this.assessmentService.getOverviewStats();
+  }
 
   @Get('assessment/assigned') //service endpoint, maintenance purposes through Postman only
   @UseGuards(AuthGuard(), RoleGuard, StateGuard)

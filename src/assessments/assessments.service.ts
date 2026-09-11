@@ -14,6 +14,7 @@ import { Request } from 'express';
 import { AuthService } from 'src/auth/auth/auth.service';
 import { AssignmentsService } from 'src/assignments/assignments.service';
 import { User } from 'src/data/entities/user.entity';
+import { AssessmentStatsDTO, AssessmentStatsOverviewDTO } from 'src/models/assessment/assessment-stats.dto';
 
 @Injectable()
 export class AssessmentsService {
@@ -378,5 +379,47 @@ export class AssessmentsService {
   public async getAssessmentCategory(assessmentID: string): Promise<string> {
     const assessment = await this.assessmentRepository.findOne({ where: { id: assessmentID } })
     return assessment.exam_type
+  }
+
+  public async getOverviewStats(): Promise<AssessmentStatsOverviewDTO> {
+    try {
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      const rows = await this.assessmentRepository
+        .createQueryBuilder('assessment')
+        .where('assessment.time_started IS NOT NULL')
+        .andWhere('assessment.time_started >= :sixMonthsAgo', { sixMonthsAgo })
+        .select('assessment.is_assigned', 'is_assigned')
+        .addSelect('COUNT(*)', 'total_attempts')
+        .addSelect('AVG(COALESCE(assessment.grade, 0))', 'avg_score')
+        .addSelect(
+          'SUM(CASE WHEN assessment.pass = true THEN 1 ELSE 0 END) * 1.0 / COUNT(*) * 100',
+          'pass_rate',
+        )
+        .groupBy('assessment.is_assigned')
+        .getRawMany();
+
+      const empty: AssessmentStatsDTO = { totalAttempts: 0, avgScore: 0, passRate: 0 };
+
+      const toStats = (row: any): AssessmentStatsDTO => row ? {
+        totalAttempts: Number(row.total_attempts),
+        avgScore: Number(row.avg_score),
+        passRate: Number(row.pass_rate),
+      } : empty;
+
+      const assignedRow = rows.find(r => Number(r.is_assigned) === 1);
+      const trainingRow = rows.find(r => Number(r.is_assigned) === 0);
+
+      return {
+        assigned: toStats(assignedRow),
+        training: toStats(trainingRow),
+      };
+    } catch (ex) {
+      throw new CustomException(
+        `Assessment Service error while retrieving overview stats: ${ex.message}`,
+        ex.statusCode || 500,
+      );
+    }
   }
 }
