@@ -22,7 +22,7 @@ export class AnswersService {
             return correctAnswers;
 
         } catch (ex) {
-            throw new CustomEvent(`Answer Service error while collecting records: ${ex.message}`, ex.statusCode);
+            throw new CustomException(`Answer Service error while collecting records: ${ex.message}`, ex.statusCode);
         }
     }
 
