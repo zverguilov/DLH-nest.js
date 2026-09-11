@@ -139,4 +139,37 @@ export class CategoryService {
     }
   }
 
+  /**
+   * Finds category names referenced by existing Questions that have no
+   * matching Category record (e.g. after a data migration that brought
+   * Questions over without their Categories) and creates them with the
+   * same default settings createCategory() already falls back to.
+   */
+  public async reconcileMissingCategories(): Promise<string[]> {
+    try {
+      const questionCategoryNames = await this.questionsService.getDistinctCategoryNames();
+      const existingCategories = await this.categoryRepository.find({ select: ['name'] });
+      const existingNames = new Set(existingCategories.map(c => c.name));
+
+      const missingNames = [...new Set(questionCategoryNames)]
+        .filter(name => name && !existingNames.has(name));
+
+      const created: string[] = [];
+      for (const name of missingNames) {
+        try {
+          await this.createCategory({ name } as CategoryCreatedDTO);
+          created.push(name);
+        } catch (ex) {
+          console.error(`Failed to create category "${name}" during reconciliation: ${ex.message}`);
+        }
+      }
+
+      return created;
+    } catch (ex) {
+      throw new CustomException(
+        `Category Service error while reconciling missing categories: ${ex.message}`,
+        ex.statusCode || 500,
+      );
+    }
+  }
 }

@@ -38,4 +38,10 @@ export class CategoryController {
   ): Promise<Category> {
     return this.categoryService.getCategoryByName(name);
   }
+
+  @Post('category/reconcile-missing')
+  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  public async reconcileMissingCategories(): Promise<string[]> {
+    return this.categoryService.reconcileMissingCategories();
+  }
 }

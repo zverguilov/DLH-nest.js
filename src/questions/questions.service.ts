@@ -368,4 +368,21 @@ export class QuestionsService {
       );
     }
   }
+
+  public async getDistinctCategoryNames(): Promise<string[]> {
+    try {
+      const rows = await this.questionRepository
+        .createQueryBuilder('question')
+        .select('DISTINCT question.category', 'category')
+        .where('question.is_deleted = false')
+        .getRawMany();
+
+      return rows.map(row => row.category);
+    } catch (ex) {
+      throw new CustomException(
+        `Question Service error while retrieving distinct categories: ${ex.message}`,
+        ex.statusCode || 500,
+      );
+    }
+  }
 }

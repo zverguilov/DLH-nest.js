@@ -12,8 +12,8 @@ describe('CategoryService', () => {
   let questionsService: any;
 
   beforeEach(async () => {
-    categoryRepository = { createQueryBuilder: jest.fn(), findOneOrFail: jest.fn(), update: jest.fn() };
-    questionsService = { getTotalQuestions: jest.fn() };
+    categoryRepository = { createQueryBuilder: jest.fn(), findOneOrFail: jest.fn(), update: jest.fn(), find: jest.fn() };
+    questionsService = { getTotalQuestions: jest.fn(), getDistinctCategoryNames: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -127,6 +127,51 @@ describe('CategoryService', () => {
       const result = await service.getCategoryByName('Nonexistent');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('reconcileMissingCategories', () => {
+    it('creates a category only for names used by Questions that have no existing Category record', async () => {
+      questionsService.getDistinctCategoryNames.mockResolvedValue(['CSA', 'HR', 'Orphaned-Category']);
+      categoryRepository.find.mockResolvedValue([{ name: 'CSA' }, { name: 'HR' }]);
+
+      const insertQb = createMockQueryBuilder();
+      insertQb.execute.mockResolvedValue({ identifiers: [{ id: 'new-cat' }] });
+      const selectQb = createMockQueryBuilder();
+      selectQb.getOne.mockResolvedValue({ id: 'new-cat', name: 'Orphaned-Category' });
+      mockCreateQueryBuilderSequence(categoryRepository, insertQb, selectQb);
+
+      const result = await service.reconcileMissingCategories();
+
+      expect(insertQb.values).toHaveBeenCalledWith(expect.objectContaining({ name: 'Orphaned-Category' }));
+      expect(result).toEqual(['Orphaned-Category']);
+    });
+
+    it('returns an empty list when every category already exists', async () => {
+      questionsService.getDistinctCategoryNames.mockResolvedValue(['CSA', 'HR']);
+      categoryRepository.find.mockResolvedValue([{ name: 'CSA' }, { name: 'HR' }]);
+
+      const result = await service.reconcileMissingCategories();
+
+      expect(result).toEqual([]);
+      expect(categoryRepository.createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('continues reconciling the rest if creating one category fails', async () => {
+      questionsService.getDistinctCategoryNames.mockResolvedValue(['Bad-Category', 'Good-Category']);
+      categoryRepository.find.mockResolvedValue([]);
+
+      const failingInsertQb = createMockQueryBuilder();
+      failingInsertQb.execute.mockRejectedValue(new Error('duplicate key'));
+      const okInsertQb = createMockQueryBuilder();
+      okInsertQb.execute.mockResolvedValue({ identifiers: [{ id: 'good-cat' }] });
+      const selectQb = createMockQueryBuilder();
+      selectQb.getOne.mockResolvedValue({ id: 'good-cat', name: 'Good-Category' });
+      mockCreateQueryBuilderSequence(categoryRepository, failingInsertQb, okInsertQb, selectQb);
+
+      const result = await service.reconcileMissingCategories();
+
+      expect(result).toEqual(['Good-Category']);
     });
   });
 });

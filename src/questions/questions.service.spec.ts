@@ -243,4 +243,17 @@ describe('QuestionsService', () => {
       expect(result).toBe(60);
     });
   });
+
+  describe('getDistinctCategoryNames', () => {
+    it('returns the distinct category names in use by non-deleted questions', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getRawMany.mockResolvedValue([{ category: 'CSA' }, { category: 'HR' }]);
+      questionRepository.createQueryBuilder.mockReturnValue(qb);
+
+      const result = await service.getDistinctCategoryNames();
+
+      expect(qb.where).toHaveBeenCalledWith('question.is_deleted = false');
+      expect(result).toEqual(['CSA', 'HR']);
+    });
+  });
 });
