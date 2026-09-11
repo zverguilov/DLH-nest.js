@@ -30,7 +30,7 @@ export class CommentsService {
 
             return {
                 id: newComment.identifiers[0].id,
-                content: newComment.identifiers[0].content
+                content: payload.content
             }
 
         } catch (ex) {
