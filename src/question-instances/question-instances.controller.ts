@@ -4,7 +4,7 @@ import { MarkPayloadDTO } from 'src/models/others/mark-payload.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-question-instance.dto';
 import { ReviewQuestionInstanceDTO } from 'src/models/question-instance/review-question-instance.dto';
-import { ReportQuestionInstanceDTO } from 'src/models/question-instance/report-question-instance.dto';
+import { AssessmentReportDTO } from 'src/models/question-instance/assessment-report.dto';
 import { StateGuard } from 'src/middleware/guards/state.guard';
 import { Request } from 'express';
 import { JwtPayload } from 'src/auth/auth/jwt-payload';
@@ -23,7 +23,7 @@ export class QuestionInstancesController {
 
     @Get('assessment/report/:assessmentID')
     @UseGuards(AuthGuard(), StateGuard)
-    public async getReport(@Param('assessmentID') assessmentID: string, @Req() request: Request): Promise<ReportQuestionInstanceDTO[]> {
+    public async getReport(@Param('assessmentID') assessmentID: string, @Req() request: Request): Promise<AssessmentReportDTO> {
         return await this.questionInstanceService.getReport(assessmentID, ((request as any).user as JwtPayload).id);
     }
 

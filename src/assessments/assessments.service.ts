@@ -69,28 +69,19 @@ export class AssessmentsService {
       const questionInstances =
         await this.questionInstanceService.getQIStatus(assessmentID);
 
+      const totalCount = questionInstances.length;
+      const correctCount = questionInstances.reduce(
+        (a, c) => ((a += c.is_correct ? 1 : 0), a),
+        0,
+      );
+      const grade = totalCount ? (correctCount / totalCount) * 100 : 0;
+
       const updateAssessment: Partial<Assessment> = {
-        grade:
-          (questionInstances.reduce(
-            (a, c) => ((a += c.is_correct ? 1 : 0), a),
-            0,
-          ) /
-            60) *
-          100,
+        grade,
         time_ended: new Date(),
         status: 'Finished',
         submitted: true,
-        pass:
-          Math.ceil(
-            (questionInstances.reduce(
-              (a, c) => ((a += c.is_correct ? 1 : 0), a),
-              0,
-            ) /
-              60) *
-            100,
-          ) >= passingGrade
-            ? true
-            : false,
+        pass: Math.ceil(grade) >= passingGrade,
       };
 
       await this.assessmentRepository.update(assessmentID, {

@@ -9,7 +9,7 @@ import { CustomException } from 'src/middleware/exception/custom-exception';
 import { MarkPayloadDTO } from 'src/models/others/mark-payload.dto';
 import { GetQuestionInstanceDTO } from 'src/models/question-instance/get-question-instance.dto';
 import { QuestionInstanceStatusDTO } from 'src/models/question-instance/question-instance-status.dto';
-import { ReportQuestionInstanceDTO } from 'src/models/question-instance/report-question-instance.dto';
+import { AssessmentReportDTO } from 'src/models/question-instance/assessment-report.dto';
 import { ReviewQuestionInstanceDTO } from 'src/models/question-instance/review-question-instance.dto';
 import { EntityManager, Repository } from 'typeorm';
 
@@ -45,11 +45,15 @@ export class QuestionInstancesService {
         }
     }
 
-    public async getReport(assessmentID: string, requestUserId: string): Promise<ReportQuestionInstanceDTO[]> {
+    public async getReport(assessmentID: string, requestUserId: string): Promise<AssessmentReportDTO> {
         try {
             await this.verifyAssessmentOwnership(assessmentID, requestUserId);
 
-            return await this.questionInstanceRepository.createQueryBuilder('question_instance')
+            const total = await this.questionInstanceRepository.createQueryBuilder('question_instance')
+                .where('question_instance.assessment = :id', { id: assessmentID })
+                .getCount();
+
+            const questions = await this.questionInstanceRepository.createQueryBuilder('question_instance')
                 .where('question_instance.assessment = :id', { id: assessmentID })
                 .andWhere('question_instance.is_correct = false')
                 .leftJoin('question_instance.question', 'question')
@@ -66,6 +70,8 @@ export class QuestionInstancesService {
                     'answer.is_correct'
                 ])
                 .getMany();
+
+            return { total, questions };
 
         } catch (ex) {
             throw new CustomException(`Question Instance Service error while generating assessment report: ${ex.message}`, ex.statusCode)
