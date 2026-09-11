@@ -49,7 +49,10 @@ export class AuthService {
     try {
       const loginMethod = { email: user.email };
       const foundUser: User = await this.usersRepository
-        .findOne({ where: { ...loginMethod, is_deleted: false } });
+        .createQueryBuilder('user')
+        .addSelect('user.password')
+        .where({ ...loginMethod, is_deleted: false })
+        .getOne();
 
       if (!foundUser || !(await bcrypt.compare(user.password, foundUser.password))) throw new CustomException(`Auth Service login error: invalid credentials.`, 400);
 

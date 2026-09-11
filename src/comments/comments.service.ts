@@ -14,14 +14,14 @@ export class CommentsService {
         private readonly questionsService: QuestionsService
     ) { }
 
-    public async flag(payload: FlagQuestionDTO): Promise<CommentCreatedDTO> {
+    public async flag(payload: FlagQuestionDTO, requestUserId: string): Promise<CommentCreatedDTO> {
         try {
             let newComment = await this.commentRepository.createQueryBuilder()
                 .insert()
                 .into('comment')
                 .values({
                     question: payload.question_id,
-                    user: payload.user_id,
+                    user: requestUserId,
                     content: payload.content
                 })
                 .execute()

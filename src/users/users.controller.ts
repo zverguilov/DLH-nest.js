@@ -7,6 +7,7 @@ import {
   ParseBoolPipe,
   Put,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -19,6 +20,9 @@ import { UserActiveDTO } from 'src/models/user/user-active.dto';
 import { UserPassResetDTO } from 'src/models/user/user-pass-reset.dto';
 import { number } from 'joi';
 import { TopAchieverDTO } from 'src/models/user/top-achiever.dto';
+import { Request } from 'express';
+import { JwtPayload } from 'src/auth/auth/jwt-payload';
+import { CustomException } from 'src/middleware/exception/custom-exception';
 
 @Controller('api/v1')
 export class UsersController {
@@ -71,7 +75,12 @@ export class UsersController {
   @UseGuards(AuthGuard())
   public async getUserByID(
     @Param('userID') userID: string,
+    @Req() request: Request,
   ): Promise<UserGetDTO> {
+    const requestUser = (request as any).user as JwtPayload;
+    if (userID !== requestUser.id && requestUser.role !== 'Admin') {
+      throw new CustomException('You do not have access to this resource.', 403);
+    }
     return await this.usersService.getUserByID(userID);
   }
 
