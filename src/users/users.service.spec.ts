@@ -4,6 +4,7 @@ import { UsersService } from './users.service';
 import { User } from 'src/data/entities/user.entity';
 import { Assessment } from 'src/data/entities/assessment.entity';
 import * as bcrypt from 'bcrypt';
+import { createMockQueryBuilder } from 'src/test-utils/mock-query-builder';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -101,6 +102,61 @@ describe('UsersService', () => {
 
       expect(userRepository.delete).toHaveBeenCalledWith('u1');
       expect(result).toBe('User deleted successfully.');
+    });
+  });
+
+  describe('getAllUsers', () => {
+    it('calling with no arguments applies no role/state/search filter (the auth.service.ts first-user-becomes-admin check relies on this)', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      userRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllUsers();
+
+      expect(qb.andWhere).not.toHaveBeenCalled();
+    });
+
+    it('filters by exact role match ("show matching")', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      userRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllUsers(undefined, undefined, undefined, undefined, 'Admin');
+
+      expect(qb.andWhere).toHaveBeenCalledWith('user.role = :role', { role: 'Admin' });
+    });
+
+    it('excludes an exact role match ("filter out")', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      userRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllUsers(undefined, undefined, undefined, undefined, undefined, 'Admin');
+
+      expect(qb.andWhere).toHaveBeenCalledWith('user.role != :excludeRole', { excludeRole: 'Admin' });
+    });
+
+    it('filters by exact state match and excludes an exact state match', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      userRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllUsers(undefined, undefined, undefined, undefined, undefined, undefined, 'Active', 'Locked');
+
+      expect(qb.andWhere).toHaveBeenCalledWith('user.state = :state', { state: 'Active' });
+      expect(qb.andWhere).toHaveBeenCalledWith('user.state != :excludeState', { excludeState: 'Locked' });
+    });
+
+    it('combines role/state filters with an existing search term', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      userRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllUsers(undefined, undefined, undefined, 'jane', 'Admin', undefined, 'Active');
+
+      expect(qb.andWhere).toHaveBeenCalledWith('(LOWER(user.full_name) LIKE :search OR LOWER(user.email) LIKE :search)', { search: '%jane%' });
+      expect(qb.andWhere).toHaveBeenCalledWith('user.role = :role', { role: 'Admin' });
+      expect(qb.andWhere).toHaveBeenCalledWith('user.state = :state', { state: 'Active' });
     });
   });
 

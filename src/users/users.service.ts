@@ -80,7 +80,11 @@ export class UsersService {
     limit?: number,
     cursorName?: string,
     cursorId?: string,
-    search?: string
+    search?: string,
+    role?: string,
+    excludeRole?: string,
+    state?: string,
+    excludeState?: string,
   ): Promise<UserGetDTO[]> {
     const qb = this.userRepository
       .createQueryBuilder('user')
@@ -108,6 +112,22 @@ export class UsersService {
         '(LOWER(user.full_name) LIKE :search OR LOWER(user.email) LIKE :search)',
         { search: `%${search.toLowerCase()}%` }
       );
+    }
+
+    if (role) {
+      qb.andWhere('user.role = :role', { role });
+    }
+
+    if (excludeRole) {
+      qb.andWhere('user.role != :excludeRole', { excludeRole });
+    }
+
+    if (state) {
+      qb.andWhere('user.state = :state', { state });
+    }
+
+    if (excludeState) {
+      qb.andWhere('user.state != :excludeState', { excludeState });
     }
 
     if (limit) {

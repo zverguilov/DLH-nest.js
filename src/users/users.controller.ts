@@ -34,9 +34,13 @@ export class UsersController {
     @Query('limit') limit?: string,
     @Query('cursorName') cursorName?: string,
     @Query('cursorId') cursorId?: string,
-    @Query('search') search?: string
+    @Query('search') search?: string,
+    @Query('role') role?: string,
+    @Query('excludeRole') excludeRole?: string,
+    @Query('state') state?: string,
+    @Query('excludeState') excludeState?: string,
   ): Promise<UserGetDTO[]> {
-    return await this.usersService.getAllUsers(+limit, cursorName, cursorId, search);
+    return await this.usersService.getAllUsers(+limit, cursorName, cursorId, search, role, excludeRole, state, excludeState);
   }
 
   @Get('users/number')
