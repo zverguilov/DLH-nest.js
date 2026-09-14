@@ -141,7 +141,9 @@ export class QuestionsService {
     category?: string,
     limit?: number,
     cursorId?: string,
-    search?: string
+    search?: string,
+    excludeCategory?: string,
+    flagged?: boolean
   ): Promise<ReviewFlaggedQuestionDTO[]> {
     try {
       const qb = this.questionRepository
@@ -159,9 +161,11 @@ export class QuestionsService {
         ])
         .where('question.is_deleted = false');
 
-      if (category && category !== 'All' && category !== 'Flagged') qb.andWhere('question.category = :category', { category });
+      if (category && category !== 'All') qb.andWhere('question.category = :category', { category });
 
-      if (category === 'Flagged') qb.andWhere('question.is_flagged = true')
+      if (excludeCategory) qb.andWhere('question.category != :excludeCategory', { excludeCategory });
+
+      if (flagged !== undefined) qb.andWhere('question.is_flagged = :flagged', { flagged });
 
       if (search) qb.andWhere('LOWER(question.body) LIKE :search', { search: `%${search.toLowerCase()}%` });
 

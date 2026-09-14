@@ -32,8 +32,14 @@ describe('QuestionsController', () => {
 
   it('getAllQuestions forwards the destructured query params to the service', async () => {
     service.getAllQuestions.mockResolvedValue([]);
-    await controller.getAllQuestions({ category: 'CSA', limit: 10, cursorId: 'c1', search: 'foo' });
-    expect(service.getAllQuestions).toHaveBeenCalledWith('CSA', 10, 'c1', 'foo');
+    await controller.getAllQuestions({ category: 'CSA', limit: 10, cursorId: 'c1', search: 'foo' } as any);
+    expect(service.getAllQuestions).toHaveBeenCalledWith('CSA', 10, 'c1', 'foo', undefined, undefined);
+  });
+
+  it('getAllQuestions forwards excludeCategory and flagged through to the service', async () => {
+    service.getAllQuestions.mockResolvedValue([]);
+    await controller.getAllQuestions({ excludeCategory: 'HR', flagged: false } as any);
+    expect(service.getAllQuestions).toHaveBeenCalledWith(undefined, undefined, undefined, undefined, 'HR', false);
   });
 
   it('updateQuestion delegates to the service with the body payload', async () => {

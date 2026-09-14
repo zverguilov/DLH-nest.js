@@ -21,9 +21,9 @@ export class QuestionsController {
     @Get('question')
     @UseGuards(AuthGuard(), RoleGuard, StateGuard)
     public async getAllQuestions(@Query() query: GetAllQuestionsQueryDto): Promise<ReviewFlaggedQuestionDTO[]> {
-        const { category, limit, cursorId, search } = query;
+        const { category, excludeCategory, flagged, limit, cursorId, search } = query;
 
-        return this.questionsService.getAllQuestions(category, limit, cursorId, search);
+        return this.questionsService.getAllQuestions(category, limit, cursorId, search, excludeCategory, flagged);
     }
 
     @Get('question/category_error_percentage')

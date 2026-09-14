@@ -98,16 +98,6 @@ describe('QuestionsService', () => {
       expect(qb.andWhere).not.toHaveBeenCalledWith('question.category = :category', { category: 'All' });
     });
 
-    it('filters to flagged questions for the "Flagged" sentinel', async () => {
-      const qb = createMockQueryBuilder();
-      qb.getMany.mockResolvedValue([]);
-      questionRepository.createQueryBuilder.mockReturnValue(qb);
-
-      await service.getAllQuestions('Flagged');
-
-      expect(qb.andWhere).toHaveBeenCalledWith('question.is_flagged = true');
-    });
-
     it('applies a case-insensitive search filter', async () => {
       const qb = createMockQueryBuilder();
       qb.getMany.mockResolvedValue([]);
@@ -116,6 +106,59 @@ describe('QuestionsService', () => {
       await service.getAllQuestions(undefined, undefined, undefined, 'Salesforce');
 
       expect(qb.andWhere).toHaveBeenCalledWith('LOWER(question.body) LIKE :search', { search: '%salesforce%' });
+    });
+
+    it('excludes an exact category match', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      questionRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllQuestions(undefined, undefined, undefined, undefined, 'CSA');
+
+      expect(qb.andWhere).toHaveBeenCalledWith('question.category != :excludeCategory', { excludeCategory: 'CSA' });
+    });
+
+    it('filters to flagged questions when flagged=true', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      questionRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllQuestions(undefined, undefined, undefined, undefined, undefined, true);
+
+      expect(qb.andWhere).toHaveBeenCalledWith('question.is_flagged = :flagged', { flagged: true });
+    });
+
+    it('filters to non-flagged questions when flagged=false (not silently skipped)', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      questionRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllQuestions(undefined, undefined, undefined, undefined, undefined, false);
+
+      expect(qb.andWhere).toHaveBeenCalledWith('question.is_flagged = :flagged', { flagged: false });
+    });
+
+    it('applies no flagged filter at all when omitted', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      questionRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllQuestions('CSA');
+
+      expect(qb.andWhere).not.toHaveBeenCalledWith(expect.stringContaining('is_flagged'), expect.anything());
+    });
+
+    it('the "Flagged" string is no longer special-cased as a category (dead sentinel removed)', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      questionRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAllQuestions('Flagged');
+
+      // Now treated as a literal (and almost certainly nonexistent) category name,
+      // not specially translated into an is_flagged filter.
+      expect(qb.andWhere).toHaveBeenCalledWith('question.category = :category', { category: 'Flagged' });
+      expect(qb.andWhere).not.toHaveBeenCalledWith(expect.stringContaining('is_flagged'), expect.anything());
     });
   });
 
