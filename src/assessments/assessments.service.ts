@@ -137,9 +137,21 @@ export class AssessmentsService {
 
     const qb = this.assessmentRepository
       .createQueryBuilder('assessment')
-      .where('assessment.userId = :user', { user: userID })
-      .orderBy('assessment.deadline', 'ASC')
-      .addOrderBy('assessment.id', 'DESC');
+      .where('assessment.userId = :user', { user: userID });
+
+    if (is_pending === undefined) {
+      // Plain history query (Profile.tsx "Past Assessments", the admin
+      // per-user history, the Home dashboard's Recent Activity/KPI calls):
+      // newest first. The cursor WHERE clause below was already written
+      // for this direction (time_started < cursor = "give me older ones").
+      qb.orderBy('assessment.time_started', 'DESC').addOrderBy('assessment.id', 'DESC');
+    } else {
+      // Assigned+pending query (Home dashboard's upcoming-deadlines panel):
+      // left exactly as-is intentionally. limit:5 with no pagination today,
+      // so changing this order could silently change *which* 5 assessments
+      // surface, not just their order - out of scope for this change.
+      qb.orderBy('assessment.deadline', 'ASC').addOrderBy('assessment.id', 'DESC');
+    }
 
     if (is_assigned !== undefined) {
       qb.andWhere('assessment.is_assigned = :isAssigned', {

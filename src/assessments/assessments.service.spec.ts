@@ -171,4 +171,53 @@ describe('AssessmentsService', () => {
       expect(qb.andWhere).toHaveBeenCalledWith('assessment.time_started >= :sixMonthsAgo', expect.objectContaining({ sixMonthsAgo: expect.any(Date) }));
     });
   });
+
+  describe('getMyAssessments', () => {
+    it('plain history query (no is_pending) sorts newest first by time_started', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      assessmentRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getMyAssessments(OWNER_ID);
+
+      expect(qb.orderBy).toHaveBeenCalledWith('assessment.time_started', 'DESC');
+      expect(qb.addOrderBy).toHaveBeenCalledWith('assessment.id', 'DESC');
+      expect(qb.orderBy).not.toHaveBeenCalledWith('assessment.deadline', 'ASC');
+    });
+
+    it('assigned+pending dashboard query keeps the original deadline ASC ordering, untouched', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      assessmentRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getMyAssessments(OWNER_ID, 5, undefined, undefined, true, true);
+
+      expect(qb.orderBy).toHaveBeenCalledWith('assessment.deadline', 'ASC');
+      expect(qb.addOrderBy).toHaveBeenCalledWith('assessment.id', 'DESC');
+      expect(qb.orderBy).not.toHaveBeenCalledWith('assessment.time_started', 'DESC');
+    });
+
+    it('is_pending=false (an explicit history filter, not the dashboard shape) also keeps the original ordering, since is_pending is defined either way', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      assessmentRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getMyAssessments(OWNER_ID, undefined, undefined, undefined, undefined, false);
+
+      expect(qb.orderBy).toHaveBeenCalledWith('assessment.deadline', 'ASC');
+    });
+
+    it('the cursor WHERE clause is applied identically regardless of which ordering branch is used', async () => {
+      const qb = createMockQueryBuilder();
+      qb.getMany.mockResolvedValue([]);
+      assessmentRepository.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getMyAssessments(OWNER_ID, undefined, '2026-01-01T00:00:00.000Z', 'a1');
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('assessment.time_started < :cursorTime'),
+        { cursorTime: '2026-01-01T00:00:00.000Z', cursorId: 'a1' },
+      );
+    });
+  });
 });
