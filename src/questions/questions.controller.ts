@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { QuestionsService } from './questions.service';
 import { AuthGuard } from '@nestjs/passport';
 import { FlagQuestionDTO } from 'src/models/question/flag-question.dto';
@@ -11,6 +11,8 @@ import { GetAllQuestionsQueryDto } from 'src/models/question/get-all-questions.d
 import { MostWrongQuestionDTO } from 'src/models/question-instance/most-wrong-question.dto';
 import { CategoryErrorPercentageDTO } from 'src/models/category/category-error-percentage.dto';
 import { QuestionPreviewDTO } from 'src/models/question/question-preview.dto';
+import { Request } from 'express';
+import { JwtPayload } from 'src/auth/auth/jwt-payload';
 
 @Controller('api/v1/')
 export class QuestionsController {
@@ -46,8 +48,8 @@ export class QuestionsController {
 
     @Put('question')
     @UseGuards(AuthGuard(), RoleGuard, StateGuard)
-    public async updateQuestion(@Body() questionInfo: UpdateQuestionDTO): Promise<string> {
-        return this.questionsService.updateQuestion(questionInfo);
+    public async updateQuestion(@Body() questionInfo: UpdateQuestionDTO, @Req() request: Request): Promise<string> {
+        return this.questionsService.updateQuestion(questionInfo, ((request as any).user as JwtPayload).id);
     }
 
     @Get('question/preview/:questionID')

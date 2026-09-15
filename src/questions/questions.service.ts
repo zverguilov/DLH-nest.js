@@ -297,6 +297,7 @@ export class QuestionsService {
 
   public async updateQuestion(
     questionInfo: UpdateQuestionDTO,
+    requestUserId: string,
   ): Promise<string> {
     try {
       await this.dataSource.transaction(async manager => {
@@ -327,6 +328,17 @@ export class QuestionsService {
         if (questionInfo.delete_answers?.length) await manager.delete(Answer, questionInfo.delete_answers)
 
         if (questionInfo.delete_comments?.length) await manager.delete(Comment, questionInfo.delete_comments);
+
+        if (questionInfo.add_comments?.length) await manager
+          .createQueryBuilder()
+          .insert()
+          .into('comment')
+          .values(questionInfo.add_comments.map(dto => ({
+            content: dto.content,
+            question: questionInfo.id,
+            user: requestUserId,
+          })))
+          .execute();
 
         await manager.update(
           Question,

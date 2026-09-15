@@ -2,6 +2,7 @@ import { Expose, Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import { UpdateAnswerDTO } from '../answer/update-answer.dto';
 import { CreateAnswerDTO } from '../answer/create-answer.dto';
+import { CreateCommentDTO } from '../comment/create-comment.dto';
 
 export class UpdateQuestionDTO {
       @Expose()
@@ -48,4 +49,11 @@ export class UpdateQuestionDTO {
       @IsArray()
       @IsUUID('4', { each: true })
       delete_comments?: string[];
+
+      @Expose()
+      @IsOptional()
+      @IsArray()
+      @ValidateNested({ each: true })
+      @Type(() => CreateCommentDTO)
+      add_comments?: CreateCommentDTO[];
 }

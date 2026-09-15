@@ -42,11 +42,12 @@ describe('QuestionsController', () => {
     expect(service.getAllQuestions).toHaveBeenCalledWith(undefined, undefined, undefined, undefined, 'HR', false);
   });
 
-  it('updateQuestion delegates to the service with the body payload', async () => {
+  it('updateQuestion delegates to the service with the body payload and the requester id from the JWT', async () => {
     service.updateQuestion.mockResolvedValue('Updated successfully.');
     const payload: any = { id: 'q1', body: 'new body' };
-    const result = await controller.updateQuestion(payload);
-    expect(service.updateQuestion).toHaveBeenCalledWith(payload);
+    const request: any = { user: { id: 'admin-uuid' } };
+    const result = await controller.updateQuestion(payload, request);
+    expect(service.updateQuestion).toHaveBeenCalledWith(payload, 'admin-uuid');
     expect(result).toBe('Updated successfully.');
   });
 

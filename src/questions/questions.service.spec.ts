@@ -236,7 +236,7 @@ describe('QuestionsService', () => {
         update_answers: [{ id: 'a1', body: 'edited', is_correct: false } as any],
         delete_answers: ['a2'],
         delete_comments: ['c1'],
-      } as any);
+      } as any, 'admin-uuid');
 
       expect(manager.save).toHaveBeenCalledWith([
         expect.objectContaining({ body: 'new answer', is_correct: true }),
@@ -259,7 +259,7 @@ describe('QuestionsService', () => {
       };
       runTransaction(manager);
 
-      await service.updateQuestion({ id: 'q1', body: 'Just a body edit' } as any);
+      await service.updateQuestion({ id: 'q1', body: 'Just a body edit' } as any, 'admin-uuid');
 
       expect(manager.save).not.toHaveBeenCalled();
       expect(manager.delete).not.toHaveBeenCalled();
@@ -267,6 +267,46 @@ describe('QuestionsService', () => {
       expect(manager.update).toHaveBeenCalledWith(Question, 'q1', {
         body: 'Just a body edit', is_flagged: undefined, category: undefined,
       });
+    });
+
+    it('adds new comments attributed to the requester, never a client-supplied user id', async () => {
+      const insertQb = createMockQueryBuilder();
+      insertQb.execute.mockResolvedValue({});
+      const manager = {
+        findOneOrFail: jest.fn().mockResolvedValue({ id: 'q1' }),
+        save: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+        createQueryBuilder: jest.fn().mockReturnValue(insertQb),
+      };
+      runTransaction(manager);
+
+      await service.updateQuestion({
+        id: 'q1',
+        add_comments: [{ content: 'This looks wrong to me' } as any],
+      } as any, 'admin-uuid');
+
+      expect(insertQb.into).toHaveBeenCalledWith('comment');
+      expect(insertQb.values).toHaveBeenCalledWith([
+        { content: 'This looks wrong to me', question: 'q1', user: 'admin-uuid' },
+      ]);
+    });
+
+    it('does not touch comments at all when add_comments is omitted', async () => {
+      const manager = {
+        findOneOrFail: jest.fn().mockResolvedValue({ id: 'q1' }),
+        save: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+        createQueryBuilder: jest.fn(),
+      };
+      runTransaction(manager);
+
+      await service.updateQuestion({ id: 'q1', body: 'no comments here' } as any, 'admin-uuid');
+
+      expect(manager.createQueryBuilder).not.toHaveBeenCalled();
     });
   });
 
