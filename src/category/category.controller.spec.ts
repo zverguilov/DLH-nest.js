@@ -12,6 +12,7 @@ describe('CategoryController', () => {
       updateCategory: jest.fn(),
       getAllCategories: jest.fn(),
       getCategoryByName: jest.fn(),
+      deleteCategory: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -50,5 +51,14 @@ describe('CategoryController', () => {
     service.getCategoryByName.mockResolvedValue({ id: 'cat1', name: 'CSA' });
     await controller.getCategoryByName('CSA');
     expect(service.getCategoryByName).toHaveBeenCalledWith('CSA');
+  });
+
+  it('deleteCategory delegates to the service with the name param', async () => {
+    service.deleteCategory.mockResolvedValue('Category CSA deleted successfully.');
+
+    const result = await controller.deleteCategory('CSA');
+
+    expect(service.deleteCategory).toHaveBeenCalledWith('CSA');
+    expect(result).toBe('Category CSA deleted successfully.');
   });
 });

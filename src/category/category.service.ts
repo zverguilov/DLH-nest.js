@@ -139,6 +139,34 @@ export class CategoryService {
     }
   }
 
+  public async deleteCategory(name: string): Promise<string> {
+    try {
+      const category = await this.categoryRepository.findOne({ where: { name } });
+
+      if (!category) {
+        throw new CustomException(`Category "${name}" not found.`, 404);
+      }
+
+      const totalQuestions = await this.questionsService.getTotalQuestions(name);
+
+      if (totalQuestions > 0) {
+        throw new CustomException(
+          `Cannot delete category "${name}": it still has ${totalQuestions} question(s). Remove or reassign them first.`,
+          409,
+        );
+      }
+
+      await this.categoryRepository.delete({ name });
+
+      return `Category ${name} deleted successfully.`;
+    } catch (ex) {
+      throw new CustomException(
+        `Category Service error while deleting category: ${ex.message}`,
+        ex.statusCode || 500,
+      );
+    }
+  }
+
   /**
    * Finds category names referenced by existing Questions that have no
    * matching Category record (e.g. after a data migration that brought

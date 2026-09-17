@@ -12,7 +12,14 @@ describe('CategoryService', () => {
   let questionsService: any;
 
   beforeEach(async () => {
-    categoryRepository = { createQueryBuilder: jest.fn(), findOneOrFail: jest.fn(), update: jest.fn(), find: jest.fn() };
+    categoryRepository = {
+      createQueryBuilder: jest.fn(),
+      findOneOrFail: jest.fn(),
+      findOne: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      find: jest.fn(),
+    };
     questionsService = { getTotalQuestions: jest.fn(), getDistinctCategoryNames: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -127,6 +134,35 @@ describe('CategoryService', () => {
       const result = await service.getCategoryByName('Nonexistent');
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe('deleteCategory', () => {
+    it('deletes the category when it has no questions', async () => {
+      categoryRepository.findOne.mockResolvedValue({ id: 'cat1', name: 'CSA' });
+      questionsService.getTotalQuestions.mockResolvedValue(0);
+      categoryRepository.delete.mockResolvedValue({ affected: 1 });
+
+      const result = await service.deleteCategory('CSA');
+
+      expect(questionsService.getTotalQuestions).toHaveBeenCalledWith('CSA');
+      expect(categoryRepository.delete).toHaveBeenCalledWith({ name: 'CSA' });
+      expect(result).toBe('Category CSA deleted successfully.');
+    });
+
+    it('throws a 404 when the category does not exist', async () => {
+      categoryRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.deleteCategory('Nonexistent')).rejects.toMatchObject({ statusCode: 404 });
+      expect(categoryRepository.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws a 409 and does not delete when the category still has questions', async () => {
+      categoryRepository.findOne.mockResolvedValue({ id: 'cat1', name: 'CSA' });
+      questionsService.getTotalQuestions.mockResolvedValue(3);
+
+      await expect(service.deleteCategory('CSA')).rejects.toMatchObject({ statusCode: 409 });
+      expect(categoryRepository.delete).not.toHaveBeenCalled();
     });
   });
 
