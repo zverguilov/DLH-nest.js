@@ -100,6 +100,23 @@ describe('LoadService', () => {
     expect(answerQb.values).toHaveBeenNthCalledWith(3, { body: 'Five', is_correct: false, question: { id: 'q1', body: 'What is 2+2?' } });
   });
 
+  it('stamps created questions with the source file name when one is provided', async () => {
+    worksheetsForTest = [makeWorksheet('CSA', [
+      [undefined, 1, 'What is 2+2?', 'Three / Four / Five', '0,1,0', 'CSA'],
+    ])];
+    categoryService.getCategoryByName.mockResolvedValue({ id: 'cat1', name: 'CSA' });
+    questionRepository.save.mockResolvedValue({ id: 'q1', body: 'What is 2+2?' });
+    const answerQb = createMockQueryBuilder();
+    answerQb.execute.mockResolvedValue({});
+    answerRepository.createQueryBuilder.mockReturnValue(answerQb);
+
+    await service.loadData('fake-buffer' as any, 'dump.xlsx');
+
+    expect(questionRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+      source: 'dump.xlsx',
+    }));
+  });
+
   it('continues importing remaining rows when one row fails to save (e.g. a duplicate)', async () => {
     worksheetsForTest = [makeWorksheet('CSA', [
       [undefined, 1, 'Bad question', 'A / B', '1,0', 'CSA'],

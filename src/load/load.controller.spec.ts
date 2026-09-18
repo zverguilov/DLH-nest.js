@@ -59,6 +59,6 @@ describe('LoadController', () => {
 
     await controller.loadData(file);
 
-    expect(service.loadData).toHaveBeenCalledWith(buffer);
+    expect(service.loadData).toHaveBeenCalledWith(buffer, file.originalname);
   });
 });

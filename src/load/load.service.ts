@@ -17,7 +17,7 @@ export class LoadService {
         public readonly questionService: QuestionsService
     ) { }
 
-    public async loadData(fileBuffer: string): Promise<string> {
+    public async loadData(fileBuffer: string, sourceFileName?: string): Promise<string> {
         try {
             const sheetData = await this.readCell(fileBuffer);
             const sheets = Object.keys(sheetData);
@@ -39,6 +39,7 @@ export class LoadService {
                     let newQuestion = await this.questionRepository.create();
                     newQuestion.body = e[2];
                     newQuestion.category = e[5];
+                    newQuestion.source = sourceFileName;
 
                     try {
                         let createdQuestion = await this.questionRepository.save(newQuestion);

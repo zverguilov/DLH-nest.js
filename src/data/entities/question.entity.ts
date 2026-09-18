@@ -26,6 +26,9 @@ export class Question {
     @Column({ type: 'tinyint', nullable: false, default: false })
     public is_deleted: boolean;
 
+    @Column({ type: 'nvarchar', nullable: true, length: 255 })
+    public source?: string;
+
     @OneToMany(type => Answer, answer => answer.question)
     public answers: Promise<Answer[]>
 

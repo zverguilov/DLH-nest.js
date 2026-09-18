@@ -34,6 +34,6 @@ export class LoadController {
 
         await fs.writeFile(filePath, file.buffer);
 
-        return await this.loadService.loadData(file.buffer);
+        return await this.loadService.loadData(file.buffer, file.originalname);
     }
 }
