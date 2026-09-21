@@ -28,9 +28,11 @@ describe('Category (e2e)', () => {
     await app.close();
   });
 
-  describe('GET /category (Admin-only)', () => {
-    it('rejects a non-admin caller', async () => {
-      await request(app.getHttpServer()).get('/api/v1/category').set(authHeader(userToken)).expect(403);
+  describe('GET /category', () => {
+    it('allows a non-admin caller, so the exam category dropdown can populate', async () => {
+      const res = await request(app.getHttpServer()).get('/api/v1/category').set(authHeader(userToken)).expect(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.some((c: any) => c.name === TEST_CATEGORY_NAME)).toBe(true);
     });
 
     it('returns the list of categories including the dedicated test category', async () => {

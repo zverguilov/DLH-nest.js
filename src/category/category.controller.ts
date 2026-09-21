@@ -26,7 +26,7 @@ export class CategoryController {
   }
 
   @Get('category')
-  @UseGuards(AuthGuard(), RoleGuard, StateGuard)
+  @UseGuards(AuthGuard(), StateGuard)
   public async getAllCategories(): Promise<GetCategoryDTO[]> {
     return this.categoryService.getAllCategories();
   }
