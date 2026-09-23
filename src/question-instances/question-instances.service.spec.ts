@@ -96,6 +96,22 @@ describe('QuestionInstancesService', () => {
       expect(result).toEqual({ total: 50, questions: wrongQuestions });
       expect(wrongQb.andWhere).toHaveBeenCalledWith('question_instance.is_correct = false');
     });
+
+    it('selects the question is_flagged column so the report can show flag state', async () => {
+      assessmentRepository.findOne.mockResolvedValue({ id: 'a1', user: { id: OWNER_ID } });
+
+      const totalQb = createMockQueryBuilder();
+      totalQb.getCount.mockResolvedValue(1);
+
+      const wrongQb = createMockQueryBuilder();
+      wrongQb.getMany.mockResolvedValue([]);
+
+      mockCreateQueryBuilderSequence(questionInstanceRepository, totalQb, wrongQb);
+
+      await service.getReport('a1', OWNER_ID);
+
+      expect(wrongQb.select).toHaveBeenCalledWith(expect.arrayContaining(['question.is_flagged']));
+    });
   });
 
   describe('mark()', () => {

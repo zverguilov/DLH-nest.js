@@ -65,6 +65,7 @@ export class QuestionInstancesService {
                     'question_instance.selected_answers',
                     'question.id',
                     'question.body',
+                    'question.is_flagged',
                     'answer.id',
                     'answer.body',
                     'answer.is_correct'
